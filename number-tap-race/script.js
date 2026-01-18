@@ -1,4 +1,5 @@
-const MAX_NUMBER = 9;
+let multiplier = 1;
+let maxNumber = 9;
 
 let currentNumber = 1;
 let startTime = null;
@@ -9,6 +10,22 @@ const countdownEl = document.getElementById("countdown");
 const timerEl = document.getElementById("timer");
 const gameBoard = document.getElementById("gameBoard");
 const resultEl = document.getElementById("result");
+const difficultyButtons = document.querySelectorAll(".difficulty button");
+
+difficultyButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    if (startButton.disabled) return;
+
+    difficultyButtons.forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    multiplier = Number(btn.dataset.multiplier);
+    maxNumber = 9 * multiplier;
+
+    createNumbers();
+    disableNumbers();
+  });
+});
 
 createNumbers();
 disableNumbers();
@@ -16,7 +33,7 @@ disableNumbers();
 function createNumbers() {
   gameBoard.innerHTML = "";
 
-  const numbers = Array.from({ length: MAX_NUMBER }, (_, i) => i + 1);
+  const numbers = Array.from({ length: maxNumber }, (_, i) => i + 1);
   numbers.sort(() => Math.random() - 0.5);
 
   numbers.forEach((num) => {
@@ -34,7 +51,7 @@ function handleNumberClick(num, element) {
   element.classList.add("disabled");
   currentNumber++;
 
-  if (currentNumber > MAX_NUMBER) {
+  if (currentNumber > maxNumber) {
     finishGame();
   }
 }
@@ -42,7 +59,6 @@ function handleNumberClick(num, element) {
 startButton.addEventListener("click", () => {
   startButton.disabled = true;
   resultEl.textContent = "";
-  countdownEl.textContent = "";
   startCountdown();
 });
 
