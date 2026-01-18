@@ -3,35 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Number Tap Race</title>
+  <title>Number Tap Game</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="app">
-    <header>
-      <h1>Number Tap Race</h1>
-
-      <div id="countdownArea">
-        <div id="countdown"></div>
-      </div>
-
-      <button id="startButton">スタート</button>
-      <div id="timer">Time: 0.00s</div>
+  <div class="app">
+    <header class="header">
+      <div id="countdown" class="countdown"></div>
+      <div id="timer" class="timer">0.00s</div>
     </header>
 
-    <main>
-      <div id="gameBoard"></div>
-      <div id="result"></div>
-    </main>
+    <main id="game-area" class="game-area"></main>
 
-    <!-- 難易度設定 -->
-    <footer>
+    <footer class="footer">
       <div class="difficulty">
-        <span>むずかしさ</span>
-        <button data-multiplier="1" class="active">×1</button>
-        <button data-multiplier="2">×2</button>
-        <button data-multiplier="3">×3</button>
+        <p>むずかしさ</p>
+        <div id="difficulty-buttons" class="difficulty-buttons"></div>
       </div>
+      <button id="start-btn" class="start-btn">スタート</button>
     </footer>
   </div>
 
