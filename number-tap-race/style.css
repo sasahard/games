@@ -1,73 +1,102 @@
-/* 全体レイアウト */
+/* ===== 全体 ===== */
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
-  background-color: #f2f6fb;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: linear-gradient(180deg, #f5f7fb, #e9eef6);
+  color: #333;
 }
 
 #app {
-  max-width: 500px;
+  max-width: 520px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 20px;
+}
+
+/* ===== ヘッダー ===== */
+header {
   text-align: center;
+  margin-bottom: 20px;
 }
 
-/* 見出し */
 h1 {
+  font-size: 24px;
   margin-bottom: 12px;
 }
 
-/* スタートボタン */
-#startButton {
-  font-size: 18px;
-  padding: 12px 24px;
-  margin-bottom: 16px;
+/* ===== カウントダウン（高さ固定） ===== */
+#countdownArea {
+  height: 80px; /* ← ここがズレ防止の要 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* カウントダウン */
 #countdown {
-  font-size: 64px;
-  font-weight: bold;
-  margin: 16px 0;
+  font-size: 56px;
+  font-weight: 700;
+  color: #4f6ef7;
 }
 
-/* タイマー */
-#timer {
+/* ===== ボタン ===== */
+#startButton {
+  margin-top: 8px;
+  padding: 12px 28px;
   font-size: 18px;
-  margin-bottom: 12px;
+  border: none;
+  border-radius: 999px;
+  background-color: #4f6ef7;
+  color: #fff;
+  box-shadow: 0 6px 12px rgba(79, 110, 247, 0.3);
+  cursor: pointer;
 }
 
-/* 数字エリア */
+#startButton:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+/* ===== タイマー ===== */
+#timer {
+  margin-top: 12px;
+  font-size: 16px;
+  color: #666;
+}
+
+/* ===== ゲーム盤面 ===== */
 #gameBoard {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 14px;
 }
 
-/* 数字ボタン */
+/* ===== 数字カード ===== */
 .number {
-  font-size: 32px;
-  padding: 20px 0;
   background-color: #ffffff;
-  border-radius: 12px;
-  border: 2px solid #ccc;
+  border-radius: 16px;
+  font-size: 32px;
+  font-weight: 600;
+  padding: 22px 0;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
   user-select: none;
 }
 
-/* 押せない状態 */
+.number:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
 .number.disabled {
-  background-color: #e0e0e0;
-  color: #999;
+  background-color: #f0f0f0;
+  color: #aaa;
+  box-shadow: none;
 }
 
-/* 結果表示 */
+/* ===== 結果 ===== */
 #result {
-  margin-top: 16px;
-  font-size: 20px;
-  font-weight: bold;
-}
-
-/* 非表示 */
-.hidden {
-  display: none;
+  margin-top: 20px;
+  font-size: 22px;
+  font-weight: 600;
+  text-align: center;
+  color: #2e7d32;
 }
