@@ -5,30 +5,29 @@ const timerEl = document.getElementById("timer");
 const diffButtonsEl = document.getElementById("difficulty-buttons");
 
 let numbers = [];
-let current = 1;
+let sortedNumbers = [];
+let currentIndex = 0;
 let startTime = null;
 let timerInterval = null;
-let difficulty = 9;
+let difficulty = 1;
 
-/* ===== 難易度生成（9の倍数） ===== */
-const difficulties = [9, 18, 27, 36, 45, 54, 63, 72, 81];
-
-difficulties.forEach(value => {
+/* ===== 難易度（1〜9） ===== */
+for (let i = 1; i <= 9; i++) {
   const btn = document.createElement("button");
-  btn.textContent = value;
+  btn.textContent = i;
   btn.className = "diff-btn";
-  if (value === difficulty) btn.classList.add("active");
+  if (i === difficulty) btn.classList.add("active");
 
   btn.addEventListener("click", () => {
-    difficulty = value;
+    difficulty = i;
     document.querySelectorAll(".diff-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
   });
 
   diffButtonsEl.appendChild(btn);
-});
+}
 
-/* ===== ゲーム開始 ===== */
+/* ===== スタート ===== */
 startBtn.addEventListener("click", async () => {
   resetGame();
   await countdown();
@@ -37,9 +36,15 @@ startBtn.addEventListener("click", async () => {
 
 function resetGame() {
   gameArea.innerHTML = "";
-  numbers = shuffle([...Array(difficulty)].map((_, i) => i + 1));
-  current = 1;
+  currentIndex = 0;
   timerEl.textContent = "0.00s";
+
+  const maxNumber = difficulty * 9;
+
+  // 1〜maxNumberから9個ランダム抽出
+  const pool = shuffle([...Array(maxNumber)].map((_, i) => i + 1));
+  numbers = pool.slice(0, 9);
+  sortedNumbers = [...numbers].sort((a, b) => a - b);
 }
 
 /* ===== カウントダウン ===== */
@@ -47,6 +52,7 @@ function countdown() {
   return new Promise(resolve => {
     let count = 3;
     countdownEl.textContent = count;
+
     const interval = setInterval(() => {
       count--;
       if (count === 0) {
@@ -60,12 +66,12 @@ function countdown() {
   });
 }
 
-/* ===== ゲーム本体 ===== */
+/* ===== ゲーム開始 ===== */
 function startGame() {
   startTime = Date.now();
   timerInterval = setInterval(updateTimer, 50);
 
-  numbers.forEach(num => {
+  shuffle(numbers).forEach(num => {
     const btn = document.createElement("button");
     btn.textContent = num;
     btn.className = "number-btn";
@@ -75,15 +81,14 @@ function startGame() {
 }
 
 function handleTap(num, btn) {
-  if (num !== current) return;
+  if (num !== sortedNumbers[currentIndex]) return;
+
   btn.style.visibility = "hidden";
-  current++;
+  currentIndex++;
 
-  if (current > difficulty) finishGame();
-}
-
-function finishGame() {
-  clearInterval(timerInterval);
+  if (currentIndex === sortedNumbers.length) {
+    clearInterval(timerInterval);
+  }
 }
 
 /* ===== タイマー ===== */
@@ -92,7 +97,7 @@ function updateTimer() {
   timerEl.textContent = elapsed.toFixed(2) + "s";
 }
 
-/* ===== ユーティリティ ===== */
+/* ===== シャッフル ===== */
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
