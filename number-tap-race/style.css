@@ -1,0 +1,73 @@
+/* 全体レイアウト */
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background-color: #f2f6fb;
+}
+
+#app {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 16px;
+  text-align: center;
+}
+
+/* 見出し */
+h1 {
+  margin-bottom: 12px;
+}
+
+/* スタートボタン */
+#startButton {
+  font-size: 18px;
+  padding: 12px 24px;
+  margin-bottom: 16px;
+}
+
+/* カウントダウン */
+#countdown {
+  font-size: 64px;
+  font-weight: bold;
+  margin: 16px 0;
+}
+
+/* タイマー */
+#timer {
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+/* 数字エリア */
+#gameBoard {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+/* 数字ボタン */
+.number {
+  font-size: 32px;
+  padding: 20px 0;
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 2px solid #ccc;
+  user-select: none;
+}
+
+/* 押せない状態 */
+.number.disabled {
+  background-color: #e0e0e0;
+  color: #999;
+}
+
+/* 結果表示 */
+#result {
+  margin-top: 16px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* 非表示 */
+.hidden {
+  display: none;
+}
