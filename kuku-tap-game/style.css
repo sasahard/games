@@ -1,0 +1,48 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #f5f5f5;
+  text-align: center;
+}
+
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+h1 {
+  margin-bottom: 12px;
+}
+
+.hidden {
+  display: none;
+}
+
+#dan-buttons,
+#answer-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+button {
+  font-size: 20px;
+  padding: 16px;
+  border: none;
+  border-radius: 8px;
+  background: #4caf50;
+  color: #fff;
+}
+
+button:disabled {
+  background: #ccc;
+}
+
+#status {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 18px;
+}
