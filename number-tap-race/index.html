@@ -8,22 +8,22 @@
 </head>
 <body>
   <div id="app">
-    <h1>Number Tap Race</h1>
+    <header>
+      <h1>Number Tap Race</h1>
 
-    <!-- スタートボタン -->
-    <button id="startButton">スタート</button>
+      <!-- カウントダウン固定エリア -->
+      <div id="countdownArea">
+        <div id="countdown"></div>
+      </div>
 
-    <!-- カウントダウン表示 -->
-    <div id="countdown" class="hidden"></div>
+      <button id="startButton">スタート</button>
+      <div id="timer">Time: 0.00s</div>
+    </header>
 
-    <!-- 経過時間 -->
-    <div id="timer">Time: 0.00s</div>
-
-    <!-- 数字エリア -->
-    <div id="gameBoard"></div>
-
-    <!-- 結果表示 -->
-    <div id="result"></div>
+    <main>
+      <div id="gameBoard"></div>
+      <div id="result"></div>
+    </main>
   </div>
 
   <script src="script.js"></script>
