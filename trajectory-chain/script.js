@@ -1,12 +1,19 @@
 // ==========================
-// Canvas 基本設定
+// Canvas 基本設定（DPR対応）
 // ==========================
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
 function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  const dpr = window.devicePixelRatio || 1;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + "px";
+  canvas.style.height = h + "px";
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 window.addEventListener("resize", resize);
 resize();
@@ -43,13 +50,13 @@ function createStars() {
 createStars();
 
 // ==========================
-// 状態管理
+// 状態
 // ==========================
 let asteroids = [];
 let shotsLeft = MAX_SHOTS;
 let trajectory = [];
 let drawing = false;
-
+let waitingNext = false;
 let gameState = "title"; // title / playing
 
 const shotsEl = document.getElementById("shots");
@@ -62,6 +69,8 @@ const startBtn = document.getElementById("startBtn");
 function createAsteroids() {
   asteroids = [];
   shotsLeft = MAX_SHOTS;
+  waitingNext = false;
+
   for (let i = 0; i < ASTEROID_COUNT; i++) {
     asteroids.push({
       x: Math.random() * (canvas.width - 100) + 50,
@@ -101,10 +110,10 @@ canvas.addEventListener("pointerup", () => {
 function applyTrajectoryForce() {
   if (trajectory.length < 2) return;
 
-  const start = trajectory[0];
-  const end = trajectory[trajectory.length - 1];
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
+  const s = trajectory[0];
+  const e = trajectory[trajectory.length - 1];
+  const dx = e.x - s.x;
+  const dy = e.y - s.y;
   const len = Math.hypot(dx, dy);
   if (len === 0) return;
 
@@ -114,14 +123,14 @@ function applyTrajectoryForce() {
   asteroids.forEach(a => {
     if (!a.alive) return;
 
-    let minDist = Infinity;
+    let min = Infinity;
     trajectory.forEach(p => {
       const d = Math.hypot(a.x - p.x, a.y - p.y);
-      if (d < minDist) minDist = d;
+      if (d < min) min = d;
     });
 
-    if (minDist < FORCE_RADIUS) {
-      const f = (FORCE_RADIUS - minDist) / FORCE_RADIUS;
+    if (min < FORCE_RADIUS) {
+      const f = (FORCE_RADIUS - min) / FORCE_RADIUS;
       a.vx += nx * f * FORCE_POWER;
       a.vy += ny * f * FORCE_POWER;
     }
@@ -132,7 +141,6 @@ function applyTrajectoryForce() {
 // 更新
 // ==========================
 function update() {
-  // 星の移動（常時）
   stars.forEach(s => {
     s.x += s.vx;
     s.y += s.vy;
@@ -156,6 +164,7 @@ function update() {
       const a = asteroids[i];
       const b = asteroids[j];
       if (!a.alive || !b.alive) continue;
+
       if (Math.hypot(a.x - b.x, a.y - b.y) < ASTEROID_RADIUS * 2) {
         a.alive = false;
         b.alive = false;
@@ -163,7 +172,8 @@ function update() {
     }
   }
 
-  if (asteroids.every(a => !a.alive)) {
+  if (asteroids.every(a => !a.alive) && !waitingNext) {
+    waitingNext = true;
     setTimeout(createAsteroids, 800);
   }
 
@@ -176,11 +186,9 @@ function update() {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // 背景
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // 星空
   stars.forEach(s => {
     ctx.beginPath();
     ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
@@ -190,7 +198,6 @@ function draw() {
 
   if (gameState !== "playing") return;
 
-  // 惑星
   asteroids.forEach(a => {
     if (!a.alive) return;
     ctx.beginPath();
@@ -215,7 +222,7 @@ loop();
 // ==========================
 startBtn.addEventListener("click", () => {
   gameState = "playing";
-  messageEl.textContent = "";
   startBtn.style.display = "none";
+  messageEl.textContent = "";
   createAsteroids();
 });
