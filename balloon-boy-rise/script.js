@@ -10,7 +10,7 @@ window.addEventListener('resize', resizeCanvas);
 
 let gameOver = false;
 let score = 0;
-let baseScrollSpeed = 0.08; // 少し早め、画面1枚30~60秒程度
+let baseScrollSpeed = 0.01; // 超ゆっくり上昇
 let tapHold = false;
 let obstacles = [];
 let animationId = null;
@@ -88,7 +88,7 @@ function gameLoop(timestamp) {
 
   // スコア更新
   score += currentSpeed * delta * 60;
-  document.getElementById('score').innerText = Math.floor(score) + ' m';
+  document.getElementById('score').innerText = score.toFixed(2) + ' m';
 
   // --- 障害物生成 ---
   if (Math.random() < 0.02) obstacles.push(new Obstacle());
