@@ -14,8 +14,7 @@
       <h1>たしざんタップ</h1>
 
       <div id="select-screen">
-        <p>だんをえらぼう</p>
-        <div id="dan-buttons"></div>
+        <p class="guide-text">だんをえらぼう</p>
       </div>
 
       <div id="game-screen" class="hidden">
@@ -26,9 +25,10 @@
       </div>
     </div>
 
-    <!-- 下部：常にDOM上に存在 -->
-    <div id="bottom-area" class="hidden">
-      <div id="answer-buttons"></div>
+    <!-- 下部：選択エリア共通 -->
+    <div id="bottom-area">
+      <div id="dan-buttons"></div>
+      <div id="answer-buttons" class="hidden"></div>
     </div>
 
     <div id="result-screen" class="hidden">
