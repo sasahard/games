@@ -40,18 +40,20 @@ const nebulas = [];
 function createNebulas() {
   nebulas.length = 0;
   for (let i = 0; i < NEBULA_COUNT; i++) {
+    const r = Math.random() * 500 + 400;
     nebulas.push({
       x: Math.random() * viewWidth,
       y: Math.random() * viewHeight,
-      r: Math.random() * 400 + 300,
-      vx: (Math.random() - 0.5) * 0.02,
-      vy: (Math.random() - 0.5) * 0.02,
+      r,
+      blur: r * (Math.random() * 0.4 + 0.8),
+      vx: (Math.random() - 0.5) * 0.015,
+      vy: (Math.random() - 0.5) * 0.015,
       color: [
-        "180,160,255",
-        "140,180,255",
-        "200,150,220"
+        "200,150,255",
+        "140,190,255",
+        "255,160,200"
       ][Math.floor(Math.random() * 3)],
-      alpha: Math.random() * 0.04 + 0.02
+      alpha: Math.random() * 0.06 + 0.04
     });
   }
 }
@@ -236,13 +238,19 @@ function draw() {
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, viewWidth, viewHeight);
 
+  // 星雲（奥）
   nebulas.forEach(n => {
     ctx.beginPath();
     ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+    ctx.shadowBlur = n.blur;
+    ctx.shadowColor = `rgba(${n.color},${n.alpha})`;
     ctx.fillStyle = `rgba(${n.color},${n.alpha})`;
     ctx.fill();
   });
+  ctx.shadowBlur = 0;
 
+  // 星（加算合成）
+  ctx.globalCompositeOperation = "lighter";
   stars.forEach(s => {
     const twinkle = Math.sin(s.phase) * 0.2 + 0.8;
     ctx.beginPath();
@@ -253,7 +261,9 @@ function draw() {
     ctx.fill();
   });
   ctx.shadowBlur = 0;
+  ctx.globalCompositeOperation = "source-over";
 
+  // 惑星
   if (gameState !== "playing") return;
 
   asteroids.forEach(a => {
