@@ -1,6 +1,3 @@
-// ==============================
-// 初期設定
-// ==============================
 const canvas = document.getElementById("game-canvas");
 const ctx = canvas.getContext("2d");
 
@@ -25,9 +22,9 @@ const blackHole = {
 // 惑星
 let planets = [];
 
-// 軌道描画用
+// 入力用
 let drawing = false;
-let path = [];
+let rawPoints = [];
 
 // ==============================
 // リサイズ
@@ -64,24 +61,24 @@ function initGame() {
     planets.push({
       x: Math.random() * width,
       y: Math.random() * height,
-      r: 10 + Math.random() * 8,
+      r: 12,
       captured: false
     });
   }
 }
 
 // ==============================
-// 入力処理（フリック）
+// 入力処理
 // ==============================
-canvas.addEventListener("pointerdown", (e) => {
+canvas.addEventListener("pointerdown", e => {
   if (!gameActive || tries <= 0) return;
   drawing = true;
-  path = [{ x: e.clientX, y: e.clientY }];
+  rawPoints = [{ x: e.clientX, y: e.clientY }];
 });
 
-canvas.addEventListener("pointermove", (e) => {
+canvas.addEventListener("pointermove", e => {
   if (!drawing) return;
-  path.push({ x: e.clientX, y: e.clientY });
+  rawPoints.push({ x: e.clientX, y: e.clientY });
 });
 
 canvas.addEventListener("pointerup", () => {
@@ -93,18 +90,45 @@ canvas.addEventListener("pointerup", () => {
 });
 
 // ==============================
-// 惑星捕捉判定
+// ベジェ曲線補間
+// ==============================
+function getBezierPoints(points, segments = 20) {
+  if (points.length < 3) return [];
+
+  const result = [];
+  for (let i = 0; i < points.length - 2; i++) {
+    const p0 = points[i];
+    const p1 = points[i + 1];
+    const p2 = points[i + 2];
+
+    for (let t = 0; t <= 1; t += 1 / segments) {
+      const x =
+        (1 - t) * (1 - t) * p0.x +
+        2 * (1 - t) * t * p1.x +
+        t * t * p2.x;
+      const y =
+        (1 - t) * (1 - t) * p0.y +
+        2 * (1 - t) * t * p1.y +
+        t * t * p2.y;
+
+      result.push({ x, y });
+    }
+  }
+  return result;
+}
+
+// ==============================
+// 捕捉判定（ベジェ上）
 // ==============================
 function checkCapture() {
+  const curvePoints = getBezierPoints(rawPoints);
+
   planets.forEach(p => {
     if (p.captured) return;
 
-    path.forEach(pt => {
-      const dx = p.x - pt.x;
-      const dy = p.y - pt.y;
-      const dist = Math.hypot(dx, dy);
-
-      if (dist < p.r + 8) {
+    curvePoints.forEach(pt => {
+      const dist = Math.hypot(p.x - pt.x, p.y - pt.y);
+      if (dist < p.r + 6) {
         p.captured = true;
         score += 10;
       }
@@ -141,12 +165,13 @@ function draw() {
     ctx.fill();
   });
 
-  // 軌道
-  if (path.length > 1) {
+  // ベジェ軌道描画
+  if (rawPoints.length >= 3) {
+    const curve = getBezierPoints(rawPoints);
     ctx.beginPath();
-    ctx.moveTo(path[0].x, path[0].y);
-    path.forEach(pt => ctx.lineTo(pt.x, pt.y));
-    ctx.strokeStyle = "rgba(255,255,255,0.6)";
+    ctx.moveTo(curve[0].x, curve[0].y);
+    curve.forEach(pt => ctx.lineTo(pt.x, pt.y));
+    ctx.strokeStyle = "rgba(255,255,255,0.7)";
     ctx.lineWidth = 2;
     ctx.stroke();
   }
