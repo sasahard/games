@@ -22,7 +22,7 @@ window.addEventListener("resize", resize);
 resize();
 
 // ==========================
-// 背景星雲（負荷軽減：一層）
+// 背景星雲
 // ==========================
 const NEBULA_COUNT = 1;
 const nebulas = [];
@@ -34,13 +34,13 @@ for (let i = 0; i < NEBULA_COUNT; i++) {
     y: Math.random() * viewHeight,
     r,
     color: "180,120,255",
-    alpha: Math.random() * 0.04 + 0.03, // 少し濃く
+    alpha: Math.random() * 0.04 + 0.03,
     vx: (Math.random() - 0.5) * 0.01,
     vy: (Math.random() - 0.5) * 0.01
   });
 }
 
-// 背景星（前面）
+// 背景星
 const STAR_COUNT = 400;
 const stars = [];
 for (let i = 0; i < STAR_COUNT; i++) {
@@ -204,7 +204,6 @@ function update() {
     }
   }
 
-  // 全破壊後、自動再生成
   if (asteroids.filter(a => a.alive).length === 0 && !waitingNext && gameState === "playing") {
     waitingNext = true;
     setTimeout(createAsteroids, 700);
@@ -224,7 +223,7 @@ function draw() {
   // 星雲
   nebulas.forEach(n => {
     const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
-    g.addColorStop(0, `rgba(${n.color}, ${n.alpha * 1.8})`); // 中心少し明るく
+    g.addColorStop(0, `rgba(${n.color}, ${n.alpha * 1.8})`);
     g.addColorStop(0.5, `rgba(${n.color}, ${n.alpha * 0.6})`);
     g.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = g;
@@ -244,6 +243,12 @@ function draw() {
     ctx.fill();
   });
   ctx.shadowBlur = 0;
+
+  // タイトル
+  ctx.font = `${Math.floor(viewWidth / 12)}px 'Orbitron', sans-serif`;
+  ctx.fillStyle = "white";
+  ctx.textAlign = "center";
+  ctx.fillText("Trajectory Chain", viewWidth / 2, viewHeight * 0.15);
 
   // 惑星
   asteroids.forEach(a => {
