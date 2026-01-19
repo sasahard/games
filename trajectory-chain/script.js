@@ -1,5 +1,5 @@
 // ==========================
-// 基本設定
+// Canvas 基本設定
 // ==========================
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -17,7 +17,9 @@ resize();
 const ASTEROID_COUNT = 10;
 const ASTEROID_RADIUS = 12;
 const MAX_SHOTS = 5;
-const FORCE_RADIUS = 120;
+
+// 軌跡による力場
+const FORCE_RADIUS = 140;
 const FORCE_POWER = 6;
 
 // ==========================
@@ -27,7 +29,7 @@ let asteroids = [];
 let shotsLeft = MAX_SHOTS;
 let trajectory = [];
 let drawing = false;
-let gameState = "playing";
+let gameState = "playing"; // playing / clear / over
 
 const shotsEl = document.getElementById("shots");
 const messageEl = document.getElementById("message");
@@ -50,7 +52,7 @@ function createAsteroids() {
 createAsteroids();
 
 // ==========================
-// 入力（軌跡描画）
+// 入力：軌跡を描く
 // ==========================
 canvas.addEventListener("pointerdown", (e) => {
   if (gameState !== "playing") return;
@@ -75,20 +77,21 @@ canvas.addEventListener("pointerup", () => {
 });
 
 // ==========================
-// 軌跡の力を適用
+// 軌跡 → 力場を適用
 // ==========================
 function applyTrajectoryForce() {
   if (trajectory.length < 2) return;
 
   const start = trajectory[0];
   const end = trajectory[trajectory.length - 1];
-  const dirX = end.x - start.x;
-  const dirY = end.y - start.y;
-  const length = Math.hypot(dirX, dirY);
+
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const length = Math.hypot(dx, dy);
   if (length === 0) return;
 
-  const nx = dirX / length;
-  const ny = dirY / length;
+  const nx = dx / length;
+  const ny = dy / length;
 
   asteroids.forEach(a => {
     if (!a.alive) return;
@@ -96,9 +99,9 @@ function applyTrajectoryForce() {
     let minDist = Infinity;
 
     trajectory.forEach(p => {
-      const dx = a.x - p.x;
-      const dy = a.y - p.y;
-      const d = Math.hypot(dx, dy);
+      const ddx = a.x - p.x;
+      const ddy = a.y - p.y;
+      const d = Math.hypot(ddx, ddy);
       if (d < minDist) minDist = d;
     });
 
@@ -122,6 +125,7 @@ function update() {
     a.x += a.vx;
     a.y += a.vy;
 
+    // 画面端反射
     if (a.x < ASTEROID_RADIUS || a.x > canvas.width - ASTEROID_RADIUS) {
       a.vx *= -1;
     }
@@ -130,6 +134,7 @@ function update() {
     }
   });
 
+  // 衝突判定
   for (let i = 0; i < asteroids.length; i++) {
     for (let j = i + 1; j < asteroids.length; j++) {
       const a = asteroids[i];
@@ -161,7 +166,7 @@ function update() {
 }
 
 // ==========================
-// 描画
+// 描画処理
 // ==========================
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -175,39 +180,37 @@ function draw() {
     ctx.fill();
   });
 
-  // ★ グラデーション軌跡 ★
+  // 重力フィールド風・軌跡
   if (trajectory.length > 1) {
-    const start = trajectory[0];
-    const end = trajectory[trajectory.length - 1];
+    ctx.save();
 
-    const gradient = ctx.createLinearGradient(
-      start.x, start.y,
-      end.x, end.y
-    );
+    const layers = [
+      { width: 22, alpha: 0.04, blur: 36 },
+      { width: 12, alpha: 0.07, blur: 22 },
+      { width: 5,  alpha: 0.12, blur: 10 }
+    ];
 
-    gradient.addColorStop(0.0, "rgba(150, 255, 255, 0.9)");
-    gradient.addColorStop(0.5, "rgba(120, 180, 255, 0.9)");
-    gradient.addColorStop(1.0, "rgba(255, 120, 255, 0.9)");
+    layers.forEach(layer => {
+      ctx.beginPath();
+      ctx.moveTo(trajectory[0].x, trajectory[0].y);
+      trajectory.forEach(p => ctx.lineTo(p.x, p.y));
 
-    ctx.beginPath();
-    ctx.moveTo(start.x, start.y);
-    trajectory.forEach(p => ctx.lineTo(p.x, p.y));
+      ctx.strokeStyle = `rgba(170, 220, 255, ${layer.alpha})`;
+      ctx.lineWidth = layer.width;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.shadowColor = "rgba(160, 210, 255, 0.6)";
+      ctx.shadowBlur = layer.blur;
 
-    ctx.strokeStyle = gradient;
-    ctx.lineWidth = 3;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.shadowColor = "rgba(180, 220, 255, 0.6)";
-    ctx.shadowBlur = 8;
+      ctx.stroke();
+    });
 
-    ctx.stroke();
-
-    ctx.shadowBlur = 0; // 他描画に影響しないよう戻す
+    ctx.restore();
   }
 }
 
 // ==========================
-// ループ
+// メインループ
 // ==========================
 function loop() {
   update();
