@@ -12,9 +12,9 @@ let problems = [];
 let currentIndex = 0;
 let startTime = null;
 
-// フィードバック用メッセージ
-const correctMessages = ["すごい！", "ナイス！", "やったね！", "グッド！", "最高！"];
-const wrongMessages   = ["もう一回！", "だいじょうぶ！", "チャレンジ！", "次にいこう！", "がんばろう！"];
+// フィードバック用メッセージ（小1向け、漢字なし）
+const correctMessages = ["すごい！", "やった！", "いいね！", "えらい！", "グッド！"];
+const wrongMessages   = ["もういちど！", "だいじょうぶ！", "がんばろう！", "つぎにいこう！", "まけない！"];
 
 // 初期表示：段選択
 showStageSelect();
