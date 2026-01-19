@@ -5,14 +5,15 @@ body {
 }
 
 #app {
-  max-width: 390px; /* iPhone想定 */
+  max-width: 390px;
   margin: 0 auto;
-  padding: 16px;
-  text-align: center;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-h1 {
-  margin-bottom: 12px;
+#top-area {
+  padding: 16px;
 }
 
 .hidden {
@@ -28,14 +29,19 @@ h1 {
 #status {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
   font-size: 18px;
 }
 
 #question {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: bold;
+}
+
+/* 下部固定 */
+#bottom-area {
+  margin-top: auto;
+  padding: 16px;
+  background: #ffffff;
 }
 
 #answer-buttons {
@@ -48,7 +54,7 @@ button {
   height: 64px;
   font-size: 24px;
   border: none;
-  border-radius: 16px;
+  border-radius: 18px;
   background: #4caf50;
   color: #fff;
 }
@@ -57,9 +63,4 @@ button:disabled {
   background: #d0d0d0;
   color: #888;
   transform: scale(0.96);
-}
-
-#retry {
-  width: 100%;
-  margin-top: 16px;
 }
