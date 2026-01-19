@@ -1,18 +1,21 @@
 // ==========================
-// Canvas 基本設定（DPR対応）
+// Canvas & View サイズ
 // ==========================
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
+let viewWidth = window.innerWidth;
+let viewHeight = window.innerHeight;
+
 function resize() {
   const dpr = window.devicePixelRatio || 1;
-  const w = window.innerWidth;
-  const h = window.innerHeight;
+  viewWidth = window.innerWidth;
+  viewHeight = window.innerHeight;
 
-  canvas.width = w * dpr;
-  canvas.height = h * dpr;
-  canvas.style.width = w + "px";
-  canvas.style.height = h + "px";
+  canvas.width = viewWidth * dpr;
+  canvas.height = viewHeight * dpr;
+  canvas.style.width = viewWidth + "px";
+  canvas.style.height = viewHeight + "px";
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 window.addEventListener("resize", resize);
@@ -31,19 +34,19 @@ const FORCE_POWER = 6;
 // ==========================
 // 星空背景
 // ==========================
-const STAR_COUNT = 300;
+const STAR_COUNT = 350;
 const stars = [];
 
 function createStars() {
   stars.length = 0;
   for (let i = 0; i < STAR_COUNT; i++) {
     stars.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      r: Math.random() * 1.2 + 0.3,
+      x: Math.random() * viewWidth,
+      y: Math.random() * viewHeight,
+      r: Math.random() * 1.3 + 0.3,
       a: Math.random() * 0.6 + 0.2,
-      vx: 0.05 + Math.random() * 0.1,
-      vy: -0.03 - Math.random() * 0.05
+      vx: 0.05 + Math.random() * 0.12,
+      vy: -0.03 - Math.random() * 0.08
     });
   }
 }
@@ -57,24 +60,31 @@ let shotsLeft = MAX_SHOTS;
 let trajectory = [];
 let drawing = false;
 let waitingNext = false;
-let gameState = "title"; // title / playing
+let gameState = "title";
 
 const shotsEl = document.getElementById("shots");
 const messageEl = document.getElementById("message");
 const startBtn = document.getElementById("startBtn");
 
 // ==========================
-// 小惑星生成
+// 小惑星生成（重なり防止）
 // ==========================
 function createAsteroids() {
   asteroids = [];
   shotsLeft = MAX_SHOTS;
   waitingNext = false;
 
-  for (let i = 0; i < ASTEROID_COUNT; i++) {
+  while (asteroids.length < ASTEROID_COUNT) {
+    const x = Math.random() * (viewWidth - 100) + 50;
+    const y = Math.random() * (viewHeight - 100) + 50;
+
+    const overlap = asteroids.some(a =>
+      Math.hypot(a.x - x, a.y - y) < ASTEROID_RADIUS * 2.5
+    );
+    if (overlap) continue;
+
     asteroids.push({
-      x: Math.random() * (canvas.width - 100) + 50,
-      y: Math.random() * (canvas.height - 100) + 50,
+      x, y,
       vx: 0,
       vy: 0,
       alive: true
@@ -144,19 +154,20 @@ function update() {
   stars.forEach(s => {
     s.x += s.vx;
     s.y += s.vy;
-    if (s.x > canvas.width) s.x = 0;
-    if (s.y < 0) s.y = canvas.height;
+    if (s.x > viewWidth) s.x = 0;
+    if (s.y < 0) s.y = viewHeight;
   });
 
   if (gameState !== "playing") return;
 
   asteroids.forEach(a => {
     if (!a.alive) return;
+
     a.x += a.vx;
     a.y += a.vy;
 
-    if (a.x < ASTEROID_RADIUS || a.x > canvas.width - ASTEROID_RADIUS) a.vx *= -1;
-    if (a.y < ASTEROID_RADIUS || a.y > canvas.height - ASTEROID_RADIUS) a.vy *= -1;
+    if (a.x < ASTEROID_RADIUS || a.x > viewWidth - ASTEROID_RADIUS) a.vx *= -1;
+    if (a.y < ASTEROID_RADIUS || a.y > viewHeight - ASTEROID_RADIUS) a.vy *= -1;
   });
 
   for (let i = 0; i < asteroids.length; i++) {
@@ -174,7 +185,7 @@ function update() {
 
   if (asteroids.every(a => !a.alive) && !waitingNext) {
     waitingNext = true;
-    setTimeout(createAsteroids, 800);
+    setTimeout(createAsteroids, 700);
   }
 
   shotsEl.textContent = `shots ${shotsLeft}`;
@@ -184,10 +195,8 @@ function update() {
 // 描画
 // ==========================
 function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
   ctx.fillStyle = "black";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, viewWidth, viewHeight);
 
   stars.forEach(s => {
     ctx.beginPath();
