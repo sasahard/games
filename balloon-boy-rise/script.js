@@ -10,7 +10,7 @@ window.addEventListener('resize', resizeCanvas);
 
 let gameOver = false;
 let score = 0;
-let baseScrollSpeed = 3;
+let baseScrollSpeed = 0.08; // 少し早め、画面1枚30~60秒程度
 let tapHold = false;
 let obstacles = [];
 let animationId = null;
@@ -35,10 +35,10 @@ class Obstacle {
 
     if (Math.random() < 0.5) {
       this.x = -this.width;
-      this.horizontalSpeed = 3 + Math.random();
+      this.horizontalSpeed = 0.8 + Math.random() * 0.4; // 少し遅め
     } else {
       this.x = canvas.width;
-      this.horizontalSpeed = -(3 + Math.random());
+      this.horizontalSpeed = -(0.8 + Math.random() * 0.4);
     }
 
     this.verticalSpeed = baseScrollSpeed;
@@ -105,10 +105,8 @@ function gameLoop(timestamp) {
 
   // --- 少年横揺れ（ふわふわ） ---
   if (!boy.targetX || Math.random() < 0.01) {
-    // 2秒に一度くらい目標横位置を更新
-    boy.targetX = boy.centerX + (Math.random() * 40 - 20); // 中心から±20px
+    boy.targetX = boy.centerX + (Math.random() * 64 - 32); // ±32px
   }
-  // 少しずつ目標Xに近づける
   boy.x += (boy.targetX - boy.x) * 0.05;
 
   // --- 少年描画 ---
