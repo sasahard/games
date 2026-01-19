@@ -14,27 +14,28 @@ resize();
 // ==========================
 // 背景：星雲 & 星
 // ==========================
-const STAR_COUNT = 520;
+const STAR_COUNT = 560;
 const stars = [];
 const nebulas = [];
 
-// 星生成
+// 星生成（高輝度・低速）
 for (let i = 0; i < STAR_COUNT; i++) {
-  const tempShift = Math.random() * 20 - 10;
+  const tempShift = Math.random() * 24 - 12;
 
   stars.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
-    r: Math.random() * 0.7 + 0.25,
 
-    baseAlpha: Math.random() * 0.4 + 0.6, // ← 輝度アップ
-    glow: Math.random() * 7 + 6,          // ← グロー強化
+    r: Math.random() * 0.6 + 0.25,
 
-    vx: -(Math.random() * 0.18 + 0.08),   // 右下 → 左上
-    vy: -(Math.random() * 0.18 + 0.08),
+    baseAlpha: Math.random() * 0.35 + 0.75, // ← さらに明るく
+    glow: Math.random() * 9 + 10,           // ← 強いにじみ
+
+    vx: -(Math.random() * 0.05 + 0.02),     // ← ゆっくり
+    vy: -(Math.random() * 0.05 + 0.02),
 
     phase: Math.random() * Math.PI * 2,
-    twinkleSpeed: Math.random() * 0.025 + 0.01,
+    twinkleSpeed: Math.random() * 0.018 + 0.008,
 
     color: {
       r: 245 + tempShift,
@@ -44,10 +45,9 @@ for (let i = 0; i < STAR_COUNT; i++) {
   });
 }
 
-// 星雲生成（奥）
+// 星雲生成（修正元維持）
 for (let i = 0; i < 5; i++) {
   const size = Math.random() * 600 + 500;
-
   nebulas.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
@@ -110,7 +110,7 @@ startBtn.addEventListener("click", () => {
 });
 
 // ==========================
-// 入力（修正元維持）
+// 入力
 // ==========================
 canvas.addEventListener("pointerdown", e => {
   if (gameState !== "playing") return;
@@ -138,44 +138,42 @@ canvas.addEventListener("pointerup", () => {
 function applyTrajectoryForce() {
   if (trajectory.length < 2) return;
 
-  const start = trajectory[0];
-  const end = trajectory[trajectory.length - 1];
-  const dx = end.x - start.x;
-  const dy = end.y - start.y;
-  const length = Math.hypot(dx, dy);
-  if (length === 0) return;
+  const s = trajectory[0];
+  const e = trajectory[trajectory.length - 1];
+  const dx = e.x - s.x;
+  const dy = e.y - s.y;
+  const len = Math.hypot(dx, dy);
+  if (len === 0) return;
 
-  const nx = dx / length;
-  const ny = dy / length;
+  const nx = dx / len;
+  const ny = dy / len;
 
   asteroids.forEach(a => {
     if (!a.alive) return;
-    let minDist = Infinity;
+    let min = Infinity;
 
     trajectory.forEach(p => {
       const d = Math.hypot(a.x - p.x, a.y - p.y);
-      if (d < minDist) minDist = d;
+      if (d < min) min = d;
     });
 
-    if (minDist < FORCE_RADIUS) {
-      const influence = (FORCE_RADIUS - minDist) / FORCE_RADIUS;
-      a.vx += nx * influence * FORCE_POWER;
-      a.vy += ny * influence * FORCE_POWER;
+    if (min < FORCE_RADIUS) {
+      const f = (FORCE_RADIUS - min) / FORCE_RADIUS;
+      a.vx += nx * f * FORCE_POWER;
+      a.vy += ny * f * FORCE_POWER;
     }
   });
 }
 
 // ==========================
-// 更新処理
+// 更新
 // ==========================
 function update() {
   stars.forEach(s => {
     s.x += s.vx;
     s.y += s.vy;
-
     if (s.x < 0) s.x = canvas.width;
     if (s.y < 0) s.y = canvas.height;
-
     s.phase += s.twinkleSpeed;
   });
 
@@ -188,10 +186,8 @@ function update() {
 
   asteroids.forEach(a => {
     if (!a.alive) return;
-
     a.x += a.vx;
     a.y += a.vy;
-
     if (a.x < ASTEROID_RADIUS || a.x > canvas.width - ASTEROID_RADIUS) a.vx *= -1;
     if (a.y < ASTEROID_RADIUS || a.y > canvas.height - ASTEROID_RADIUS) a.vy *= -1;
   });
@@ -236,9 +232,9 @@ function draw() {
     ctx.fill();
   });
 
-  // 星（強輝度）
+  // 星（超高輝度・ゆっくり）
   stars.forEach(s => {
-    const twinkle = Math.sin(s.phase) * 0.45 + 0.75;
+    const twinkle = Math.sin(s.phase) * 0.5 + 0.85; // 暗くならない
 
     ctx.shadowBlur = s.glow;
     ctx.shadowColor = `rgb(${s.color.r},${s.color.g},${s.color.b})`;
