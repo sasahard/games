@@ -22,16 +22,21 @@ const boy = {
   color: 'red'
 };
 
-// --- 障害物クラス（将来的に画像に置換可能） ---
+// --- 障害物クラス ---
 class Obstacle {
   constructor() {
     this.width = 40;
     this.height = 40;
-    this.x = Math.random() * (canvas.width - 40);
-    this.y = -50;
-    this.verticalSpeed = baseScrollSpeed; // 下方向速度
-    // 横方向 ±2~5px/frame
-    this.horizontalSpeed = (Math.random() < 0.5 ? -1 : 1) * (2 + Math.random() * 3);
+    this.y = Math.random() * canvas.height * 0.5 - 50; // 少し上方にランダム
+    // 左右どちらかから出現
+    if (Math.random() < 0.5) {
+      this.x = -this.width; // 左から
+      this.horizontalSpeed = 5 + Math.random() * 3; // 右方向
+    } else {
+      this.x = canvas.width; // 右から
+      this.horizontalSpeed = -(5 + Math.random() * 3); // 左方向
+    }
+    this.verticalSpeed = baseScrollSpeed;
     this.color = 'black';
   }
 
@@ -39,15 +44,15 @@ class Obstacle {
     const currentSpeed = tapHold ? this.verticalSpeed * 0.5 : this.verticalSpeed;
     this.y += currentSpeed;
     this.x += this.horizontalSpeed;
-
-    // 画面端で跳ね返す
-    if (this.x < 0) { this.x = 0; this.horizontalSpeed *= -1; }
-    if (this.x + this.width > canvas.width) { this.x = canvas.width - this.width; this.horizontalSpeed *= -1; }
   }
 
   draw() {
     ctx.fillStyle = this.color;
     ctx.fillRect(this.x, this.y, this.width, this.height);
+  }
+
+  isOutOfScreen() {
+    return this.x + this.width < 0 || this.x > canvas.width || this.y > canvas.height + 50;
   }
 }
 
@@ -72,7 +77,7 @@ function gameLoop() {
 
   const currentSpeed = tapHold ? baseScrollSpeed * 0.5 : baseScrollSpeed;
 
-  // スコア更新（下方向スクロール距離）
+  // スコア更新
   score += currentSpeed;
   document.getElementById('score').innerText = Math.floor(score) + ' m';
 
@@ -86,7 +91,7 @@ function gameLoop() {
 
     if (checkCollision(obs)) endGame();
 
-    if (obs.y > canvas.height + 50) obstacles.splice(index, 1);
+    if (obs.isOutOfScreen()) obstacles.splice(index, 1); // 画面外で削除
   });
 
   // 少年描画
