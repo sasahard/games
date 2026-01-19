@@ -9,6 +9,7 @@ let baseNumber = null;
 let problems = [];
 let currentIndex = 0;
 let startTime = null;
+let comboCount = 0; // 連続正解カウント
 
 // 初期表示：段選択
 showStageSelect();
@@ -18,6 +19,7 @@ function showStageSelect() {
   questionEl.textContent = "";
   resultArea.classList.add("hidden");
   buttonsEl.innerHTML = "";
+  comboCount = 0;
 
   for (let i = 0; i <= 9; i++) {
     const btn = createButton(i, () => startGame(i));
@@ -35,6 +37,7 @@ function startGame(stage) {
   shuffle(problems);
   currentIndex = 0;
   startTime = Date.now();
+  comboCount = 0;
 
   setupAnswerButtons();
   showQuestion();
@@ -62,8 +65,12 @@ function handleAnswer(value, btn) {
   if (value === correct) {
     btn.classList.add("correct", "disabled");
 
-    // 星を飛ばす
-    spawnStar();
+    // 連続正解ボーナス
+    comboCount++;
+    const starsToSpawn = Math.min(comboCount, 3);
+    for (let i = 0; i < starsToSpawn; i++) {
+      spawnStar();
+    }
 
     currentIndex++;
 
@@ -77,6 +84,7 @@ function handleAnswer(value, btn) {
   } else {
     btn.classList.add("wrong");
     setTimeout(() => btn.classList.remove("wrong"), 400);
+    comboCount = 0; // リセット
   }
 }
 
@@ -85,14 +93,17 @@ function spawnStar() {
   star.className = "star";
   star.textContent = "⭐"; // JSに埋め込んだ絵文字
 
+  // 星の大きさランダム化
+  const size = Math.floor(Math.random() * (48 - 24 + 1)) + 24;
+  star.style.fontSize = `${size}px`;
+
   const centerArea = document.getElementById("center-area");
   const centerRect = centerArea.getBoundingClientRect();
-  const x = Math.random() * (centerRect.width - 32);
+  const x = Math.random() * (centerRect.width - size);
   star.style.left = `${x}px`;
   star.style.top = `0px`;
 
   centerArea.appendChild(star);
-
   star.addEventListener("animationend", () => star.remove());
 }
 
@@ -102,6 +113,7 @@ function finishGame() {
   timeText.textContent = `タイム：${time} 秒`;
   questionEl.textContent = "";
   statusEl.textContent = "";
+  comboCount = 0;
 }
 
 retryBtn.addEventListener("click", showStageSelect);
