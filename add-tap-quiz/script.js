@@ -28,12 +28,8 @@ function showStageSelect() {
 function startGame(stage) {
   baseNumber = stage;
   problems = [];
-
   for (let i = 0; i <= 9; i++) {
-    problems.push({
-      text: `${baseNumber} + ${i}`,
-      answer: baseNumber + i
-    });
+    problems.push({ text: `${baseNumber} + ${i}`, answer: baseNumber + i });
   }
 
   shuffle(problems);
@@ -46,7 +42,6 @@ function startGame(stage) {
 
 function setupAnswerButtons() {
   buttonsEl.innerHTML = "";
-
   const answers = problems.map(p => p.answer);
   shuffle(answers);
 
@@ -67,6 +62,9 @@ function handleAnswer(value, btn) {
   if (value === correct) {
     btn.classList.add("correct", "disabled");
     currentIndex++;
+
+    // アニメーション用に中央枠にクラス追加（将来の演出）
+    resultArea.classList.add("hidden"); // まだ表示しない
 
     if (currentIndex >= problems.length) {
       finishGame();
