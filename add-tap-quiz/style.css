@@ -40,9 +40,9 @@ body {
   color: #666;
 }
 
-/* 中央枠：結果・正誤アニメーション表示用 */
+/* 中央枠：正誤メッセージ表示 */
 #center-area {
-  position: relative; /* 星アニメ用に必須 */
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -57,7 +57,17 @@ body {
   text-align: center;
 }
 
-#result-area.hidden { display: none; }
+#feedback {
+  font-size: 32px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.hidden { display: none; }
+
+#result-area {
+  margin-top: 12px;
+}
 
 #clear-text {
   font-size: 28px;
@@ -96,7 +106,6 @@ body {
   gap: 12px;
 }
 
-/* 数字ボタン */
 .answer-btn {
   font-size: 22px;
   padding: 18px 0;
@@ -135,11 +144,4 @@ body {
   50% { transform: translateX(6px); }
   75% { transform: translateX(-6px); }
   100% { transform: translateX(0); }
-}
-
-/* 星アニメーション用（初期位置のみ、移動はJSアニメ） */
-.star {
-  position: absolute;
-  color: gold;
-  pointer-events: none;
 }
