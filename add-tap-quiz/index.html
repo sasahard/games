@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>たしざんタップ</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <h1>たしざんタップ</h1>
+
+    <!-- 段選択 -->
+    <div id="select-screen">
+      <p>だんをえらぼう</p>
+      <div id="dan-buttons"></div>
+    </div>
+
+    <!-- ゲーム画面 -->
+    <div id="game-screen" class="hidden">
+      <div id="status">
+        <span id="question"></span>
+        <span id="timer">0.0 秒</span>
+      </div>
+      <div id="answer-buttons"></div>
+    </div>
+
+    <!-- 結果画面 -->
+    <div id="result-screen" class="hidden">
+      <h2>クリア！</h2>
+      <p id="result-time"></p>
+      <button id="retry">もういちど</button>
+    </div>
+  </div>
+
+  <!-- 効果音（後から置けばOK） -->
+  <audio id="sound-correct" src="sounds/correct.mp3"></audio>
+  <audio id="sound-wrong" src="sounds/wrong.mp3"></audio>
+
+  <script src="script.js"></script>
+</body>
+</html>
