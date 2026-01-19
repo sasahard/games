@@ -3,7 +3,6 @@ const soundWrong = document.getElementById("sound-wrong");
 
 const selectScreen = document.getElementById("select-screen");
 const gameScreen = document.getElementById("game-screen");
-const bottomArea = document.getElementById("bottom-area");
 const resultScreen = document.getElementById("result-screen");
 
 const danButtons = document.getElementById("dan-buttons");
@@ -19,10 +18,10 @@ let remaining = [];
 let startTime = 0;
 let timerId = null;
 
-// 段選択ボタン生成
+/* 段選択ボタン（解答ボタンと同UI） */
 for (let i = 0; i <= 9; i++) {
   const btn = document.createElement("button");
-  btn.textContent = `${i}のだん`;
+  btn.textContent = i;
   btn.onclick = () => startGame(i);
   danButtons.appendChild(btn);
 }
@@ -32,10 +31,12 @@ function startGame(selectedDan) {
   remaining = [...Array(10).keys()];
 
   selectScreen.classList.add("hidden");
-  gameScreen.classList.remove("hidden");
-  bottomArea.classList.remove("hidden"); // ★先に表示
+  danButtons.classList.add("hidden");
 
-  createAnswerButtons(); // ★表示後に生成
+  gameScreen.classList.remove("hidden");
+  answerButtons.classList.remove("hidden");
+
+  createAnswerButtons();
 
   startTime = Date.now();
   timerId = setInterval(updateTimer, 100);
@@ -69,7 +70,6 @@ function createAnswerButtons() {
   nums.forEach(num => {
     const btn = document.createElement("button");
     btn.textContent = num;
-    btn.dataset.value = num;
     btn.onclick = () => checkAnswer(btn, num);
     answerButtons.appendChild(btn);
   });
@@ -94,7 +94,7 @@ function checkAnswer(button, selected) {
 function finishGame() {
   clearInterval(timerId);
   gameScreen.classList.add("hidden");
-  bottomArea.classList.add("hidden");
+  answerButtons.classList.add("hidden");
   resultScreen.classList.remove("hidden");
 
   const t = (Date.now() - startTime) / 1000;
