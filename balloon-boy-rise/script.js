@@ -1,6 +1,9 @@
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 
+/********************
+ * Canvas resize
+ ********************/
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -8,68 +11,89 @@ function resizeCanvas() {
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
+/********************
+ * Game state
+ ********************/
 let gameOver = false;
 let score = 0;
-let baseScrollSpeed = 0.01; // バルーン上昇速度
-let tapHold = false;
-let obstacles = [];
 let animationId = null;
 let lastTime = null;
+let tapHold = false;
 
-// --- 少年（風船） ---
+/********************
+ * Physics
+ ********************/
+// 半径16px = 1m と仮定
+// 分速20m → 秒速0.333m
+const BASE_ASCENT_SPEED = 0.333; // px / sec
+const BRAKE_RATIO = 0.4;         // タップ中は減速
+
+/********************
+ * Player (Boy + Balloon)
+ ********************/
 const boy = {
   x: canvas.width / 2,
-  y: canvas.height / 2,
+  y: canvas.height / 2, // 常に画面中央
   radius: 16,
-  color: 'red',
   targetX: canvas.width / 2
 };
 
-// --- 障害物クラス ---
+/********************
+ * Obstacles
+ ********************/
+const obstacles = [];
+
 class Obstacle {
   constructor() {
     this.width = 32;
     this.height = 32;
-    this.y = Math.random() * canvas.height * 0.8; // ランダム
+
+    this.y = Math.random() * canvas.height * 0.8;
+
     if (Math.random() < 0.5) {
       this.x = -this.width;
-      this.speedX = 0.5 + Math.random() * 0.3; // ゆっくり横移動
+      this.speedX = 1.0;
     } else {
       this.x = canvas.width;
-      this.speedX = -(0.5 + Math.random() * 0.3);
+      this.speedX = -1.0;
     }
-    this.color = 'black';
   }
 
-  update(currentSpeed) {
-    this.x += this.speedX; // 横移動
-    this.y += currentSpeed; // 下方向に流れる
+  update(scrollSpeed) {
+    this.x += this.speedX;      // 横移動
+    this.y += scrollSpeed;      // バルーン上昇に合わせて下に流れる
   }
 
   draw() {
-    ctx.fillStyle = this.color;
+    ctx.fillStyle = '#000';
     ctx.fillRect(this.x, this.y, this.width, this.height);
   }
 
-  isOutOfScreen() {
-    return this.x + this.width < 0 || this.x > canvas.width || this.y > canvas.height + 50;
+  isOut() {
+    return (
+      this.x + this.width < -50 ||
+      this.x > canvas.width + 50 ||
+      this.y > canvas.height + 50
+    );
   }
 }
 
-// --- 衝突判定 ---
+/********************
+ * Collision
+ ********************/
 function checkCollision(rect) {
-  const distX = Math.abs(boy.x - rect.x - rect.width / 2);
-  const distY = Math.abs(boy.y - rect.y - rect.height / 2);
-  if (distX > (rect.width / 2 + boy.radius)) return false;
-  if (distY > (rect.height / 2 + boy.radius)) return false;
-  if (distX <= rect.width / 2) return true;
-  if (distY <= rect.height / 2) return true;
-  const dx = distX - rect.width / 2;
-  const dy = distY - rect.height / 2;
-  return dx * dx + dy * dy <= boy.radius * boy.radius;
+  const dx = Math.abs(boy.x - (rect.x + rect.width / 2));
+  const dy = Math.abs(boy.y - (rect.y + rect.height / 2));
+
+  if (dx > rect.width / 2 + boy.radius) return false;
+  if (dy > rect.height / 2 + boy.radius) return false;
+
+  return true;
 }
 
-// --- ゲームループ ---
+/********************
+ * Game loop
+ ********************/
 function gameLoop(timestamp) {
   if (gameOver) return;
 
@@ -79,85 +103,85 @@ function gameLoop(timestamp) {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // バルーン上昇速度（タップで減速）
-  const currentSpeed = tapHold ? baseScrollSpeed * 0.5 : baseScrollSpeed;
+  const currentSpeed =
+    (tapHold ? BASE_ASCENT_SPEED * BRAKE_RATIO : BASE_ASCENT_SPEED) * delta * 60;
 
-  // スコア更新
-  score += currentSpeed * delta * 60;
-  document.getElementById('score').innerText = score.toFixed(2) + ' m';
+  // score
+  score += currentSpeed;
+  document.getElementById('score').textContent =
+    score.toFixed(1) + ' m';
 
-  // --- 障害物生成 ---
-  if (Math.random() < 0.02) obstacles.push(new Obstacle());
+  // spawn obstacles
+  if (Math.random() < 0.02) {
+    obstacles.push(new Obstacle());
+  }
 
-  // --- 障害物更新・描画 ---
-  obstacles.forEach((obs, index) => {
-    obs.update(currentSpeed); // 下に流す
+  // update obstacles
+  obstacles.forEach((obs, i) => {
+    obs.update(currentSpeed);
     obs.draw();
 
     if (checkCollision(obs)) endGame();
-
-    if (obs.isOutOfScreen()) obstacles.splice(index, 1);
+    if (obs.isOut()) obstacles.splice(i, 1);
   });
 
-  // --- 少年横揺れ（ふわふわ） ---
-  if (!boy.targetX || Math.random() < 0.01) {
-    boy.targetX = canvas.width / 2 + (Math.random() * 64 - 32); // ±32px
+  // boy sway ±32px
+  if (Math.random() < 0.01) {
+    boy.targetX = canvas.width / 2 + (Math.random() * 64 - 32);
   }
   boy.x += (boy.targetX - boy.x) * 0.05;
 
-  // --- 少年描画 ---
+  // draw boy
   ctx.beginPath();
   ctx.arc(boy.x, boy.y, boy.radius, 0, Math.PI * 2);
-  ctx.fillStyle = boy.color;
+  ctx.fillStyle = 'red';
   ctx.fill();
-  ctx.closePath();
 
   animationId = requestAnimationFrame(gameLoop);
 }
 
-// --- ゲームオーバー ---
+/********************
+ * Control
+ ********************/
+function startGame() {
+  document.getElementById('start-screen').classList.add('hidden');
+  animationId = requestAnimationFrame(gameLoop);
+}
+
 function endGame() {
   gameOver = true;
   document.getElementById('game-over').classList.remove('hidden');
-  if (animationId) cancelAnimationFrame(animationId);
+  cancelAnimationFrame(animationId);
 }
 
-// --- リトライ ---
-document.getElementById('retry-button').addEventListener('click', () => {
-  resetGame();
-  startGame();
-});
+function resetGame() {
+  gameOver = false;
+  score = 0;
+  obstacles.length = 0;
+  lastTime = null;
+  boy.x = canvas.width / 2;
+  boy.targetX = canvas.width / 2;
+  document.getElementById('game-over').classList.add('hidden');
+  document.getElementById('start-screen').classList.remove('hidden');
+}
 
-// --- タップ操作 ---
+/********************
+ * Input
+ ********************/
 canvas.addEventListener('mousedown', () => tapHold = true);
 canvas.addEventListener('mouseup', () => tapHold = false);
 canvas.addEventListener('touchstart', () => tapHold = true);
 canvas.addEventListener('touchend', () => tapHold = false);
 
-// --- スタート画面 ---
-const startScreen = document.getElementById('start-screen');
-startScreen.addEventListener('click', () => {
+document.getElementById('start-screen').addEventListener('click', () => {
   resetGame();
   startGame();
 });
 
-// --- 初期化 ---
-function resetGame() {
-  gameOver = false;
-  obstacles = [];
-  score = 0;
-  lastTime = null;
-  boy.x = canvas.width / 2;
-  boy.targetX = canvas.width / 2;
-  startScreen.classList.remove('hidden');
-  document.getElementById('game-over').classList.add('hidden');
-}
-
-// --- ゲーム開始 ---
-function startGame() {
-  startScreen.classList.add('hidden');
-  animationId = requestAnimationFrame(gameLoop);
-}
+document.getElementById('retry-button').addEventListener('click', () => {
+  resetGame();
+  startGame();
+});
 
 // 初期表示
 resetGame();
