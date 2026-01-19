@@ -1,107 +1,119 @@
 :root {
-  --safe-top: env(safe-area-inset-top);
   --safe-bottom: env(safe-area-inset-bottom);
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: "Nunito", -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #F5F7FA;
-  color: #333;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  background: #f5f7fb;
 }
 
 #app {
-  max-width: 390px;
-  margin: 0 auto;
-  height: 100vh;
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
 }
 
-/* 上部 */
 #top-area {
-  padding: calc(16px + var(--safe-top)) 16px 8px;
-}
-
-h1 {
+  padding: 32px 16px 16px;
   text-align: center;
-  margin: 0 0 8px;
 }
 
-.guide-text {
-  text-align: center;
-  font-size: 18px;
-}
-
-/* 問題表示 */
 #status {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
 }
 
 #question {
-  font-size: 30px;
-  font-weight: 700;
+  font-size: 32px;
+  font-weight: bold;
 }
 
-#timer {
-  font-size: 16px;
+#result-area {
+  text-align: center;
+  margin-top: 16px;
 }
 
-.hidden {
+#result-area.hidden {
   display: none;
 }
 
-/* 下部ボタンエリア */
+#clear-text {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+#time-text {
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+#retry-btn {
+  font-size: 18px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 16px;
+  background: #6366f1;
+  color: white;
+}
+
 #bottom-area {
   margin-top: auto;
-  padding: 16px 16px calc(24px + var(--safe-bottom));
-  background: #ffffff;
+  padding: 16px 16px calc(56px + var(--safe-bottom));
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(12px);
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
 }
 
-/* ボタン配置 */
-#answer-buttons {
+#buttons {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
 }
 
-/* ボタン */
-button {
-  height: 64px;
-  font-size: 24px;
-  border-radius: 20px;
+.answer-btn {
+  font-size: 22px;
+  padding: 18px 0;
+  border-radius: 16px;
   border: none;
-  background: #4CAF50;
+  background: #e5e7eb;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.answer-btn.correct {
+  background: #4ade80;
   color: #fff;
-  font-weight: 700;
-  transition: transform 0.08s ease, background-color 0.12s ease;
+  animation: pop 0.3s ease-out;
 }
 
-button:active {
-  transform: scale(0.96);
+.answer-btn.wrong {
+  background: #f87171;
+  color: #fff;
+  animation: shake 0.35s;
 }
 
-button.correct {
-  background: #8BC34A;
+.answer-btn.disabled {
+  opacity: 0.3;
+  pointer-events: none;
 }
 
-button.wrong {
-  background: #E57373;
-  animation: shake 0.25s;
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
 }
 
-button:disabled {
-  background: #DADADA;
-  color: #888;
-}
-
-/* 軽い揺れ（怒らない） */
 @keyframes shake {
   0% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  50% { transform: translateX(4px); }
-  75% { transform: translateX(-2px); }
+  25% { transform: translateX(-6px); }
+  50% { transform: translateX(6px); }
+  75% { transform: translateX(-6px); }
   100% { transform: translateX(0); }
 }
