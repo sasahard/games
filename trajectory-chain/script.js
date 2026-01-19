@@ -34,7 +34,7 @@ for (let i = 0; i < NEBULA_COUNT; i++) {
     y: Math.random() * viewHeight,
     r,
     color: "180,120,255",
-    alpha: Math.random() * 0.02 + 0.015,
+    alpha: Math.random() * 0.04 + 0.03, // 少し濃く
     vx: (Math.random() - 0.5) * 0.01,
     vy: (Math.random() - 0.5) * 0.01
   });
@@ -47,10 +47,10 @@ for (let i = 0; i < STAR_COUNT; i++) {
   stars.push({
     x: Math.random() * viewWidth,
     y: Math.random() * viewHeight,
-    r: Math.random() * 0.6 + 0.2, // 少し小さめ
-    alpha: Math.random() * 0.6 + 0.6, // 輝度強め
+    r: Math.random() * 0.6 + 0.2,
+    alpha: Math.random() * 0.6 + 0.6,
     glow: Math.random() * 6 + 2,
-    vx: -0.02 - Math.random() * 0.05, // 右下→左上
+    vx: -0.02 - Math.random() * 0.05,
     vy: -0.01 - Math.random() * 0.02,
     phase: Math.random() * Math.PI * 2,
     twinkleSpeed: Math.random() * 0.02 + 0.005
@@ -224,8 +224,8 @@ function draw() {
   // 星雲
   nebulas.forEach(n => {
     const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
-    g.addColorStop(0, `rgba(${n.color}, ${n.alpha})`);
-    g.addColorStop(0.5, `rgba(${n.color}, ${n.alpha * 0.4})`);
+    g.addColorStop(0, `rgba(${n.color}, ${n.alpha * 1.8})`); // 中心少し明るく
+    g.addColorStop(0.5, `rgba(${n.color}, ${n.alpha * 0.6})`);
     g.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = g;
     ctx.beginPath();
