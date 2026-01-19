@@ -19,7 +19,7 @@ let remaining = [];
 let startTime = 0;
 let timerId = null;
 
-// 段選択
+// 段選択ボタン生成
 for (let i = 0; i <= 9; i++) {
   const btn = document.createElement("button");
   btn.textContent = `${i}のだん`;
@@ -33,9 +33,9 @@ function startGame(selectedDan) {
 
   selectScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
-  bottomArea.classList.remove("hidden");
+  bottomArea.classList.remove("hidden"); // ★先に表示
 
-  createFixedAnswerButtons(); // ★ 1回だけ生成
+  createAnswerButtons(); // ★表示後に生成
 
   startTime = Date.now();
   timerId = setInterval(updateTimer, 100);
@@ -59,13 +59,12 @@ function nextQuestion() {
   questionEl.dataset.answer = dan + value;
 }
 
-function createFixedAnswerButtons() {
+function createAnswerButtons() {
   answerButtons.innerHTML = "";
 
   const nums = [];
   for (let i = dan; i <= dan + 9; i++) nums.push(i);
-
-  nums.sort(() => Math.random() - 0.5); // 初回のみ
+  nums.sort(() => Math.random() - 0.5);
 
   nums.forEach(num => {
     const btn = document.createElement("button");
