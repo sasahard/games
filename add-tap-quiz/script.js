@@ -5,7 +5,6 @@ const selectScreen = document.getElementById("select-screen");
 const gameScreen = document.getElementById("game-screen");
 const resultScreen = document.getElementById("result-screen");
 
-const danButtons = document.getElementById("dan-buttons");
 const answerButtons = document.getElementById("answer-buttons");
 
 const questionEl = document.getElementById("question");
@@ -18,12 +17,17 @@ let remaining = [];
 let startTime = 0;
 let timerId = null;
 
-/* 段選択ボタン（解答ボタンと同UI） */
-for (let i = 0; i <= 9; i++) {
-  const btn = document.createElement("button");
-  btn.textContent = i;
-  btn.onclick = () => startGame(i);
-  danButtons.appendChild(btn);
+/* 初期：段選択 */
+showDanSelect();
+
+function showDanSelect() {
+  answerButtons.innerHTML = "";
+  for (let i = 0; i <= 9; i++) {
+    const btn = document.createElement("button");
+    btn.textContent = i;
+    btn.onclick = () => startGame(i);
+    answerButtons.appendChild(btn);
+  }
 }
 
 function startGame(selectedDan) {
@@ -31,10 +35,7 @@ function startGame(selectedDan) {
   remaining = [...Array(10).keys()];
 
   selectScreen.classList.add("hidden");
-  danButtons.classList.add("hidden");
-
   gameScreen.classList.remove("hidden");
-  answerButtons.classList.remove("hidden");
 
   createAnswerButtons();
 
@@ -45,8 +46,8 @@ function startGame(selectedDan) {
 }
 
 function updateTimer() {
-  const t = (Date.now() - startTime) / 1000;
-  timerEl.textContent = t.toFixed(1) + " 秒";
+  timerEl.textContent =
+    ((Date.now() - startTime) / 1000).toFixed(1) + " 秒";
 }
 
 function nextQuestion() {
@@ -80,25 +81,25 @@ function checkAnswer(button, selected) {
 
   if (selected === correct) {
     soundCorrect.play().catch(() => {});
+    button.classList.add("correct");
     button.disabled = true;
 
-    const used = correct - dan;
-    remaining = remaining.filter(v => v !== used);
-
-    nextQuestion();
+    remaining = remaining.filter(v => v !== correct - dan);
+    setTimeout(nextQuestion, 150);
   } else {
     soundWrong.play().catch(() => {});
+    button.classList.add("wrong");
+    setTimeout(() => button.classList.remove("wrong"), 250);
   }
 }
 
 function finishGame() {
   clearInterval(timerId);
   gameScreen.classList.add("hidden");
-  answerButtons.classList.add("hidden");
   resultScreen.classList.remove("hidden");
 
-  const t = (Date.now() - startTime) / 1000;
-  resultTimeEl.textContent = `タイム：${t.toFixed(1)} 秒`;
+  resultTimeEl.textContent =
+    `タイム：${((Date.now() - startTime) / 1000).toFixed(1)} 秒`;
 }
 
 retryBtn.onclick = () => location.reload();
