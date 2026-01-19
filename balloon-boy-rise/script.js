@@ -10,7 +10,7 @@ window.addEventListener('resize', resizeCanvas);
 
 let gameOver = false;
 let score = 0;
-let scrollSpeed = 3; // 下スクロール基本速度
+let baseScrollSpeed = 3; // 下方向スクロール基本速度
 let tapHold = false;
 let obstacles = [];
 let animationId = null;
@@ -22,28 +22,30 @@ const boy = {
   color: 'red'
 };
 
-// --- 障害物クラス（将来的に画像差し替え可能） ---
+// --- 障害物クラス（将来的に画像に置換可能） ---
 class Obstacle {
   constructor() {
     this.width = 40;
     this.height = 40;
     this.x = Math.random() * (canvas.width - 40);
     this.y = -50;
-    this.speed = scrollSpeed; // 下スクロール速度
-    this.horizontalSpeed = (Math.random() < 0.5 ? -1 : 1) * (1 + Math.random() * 2); // 左右移動
+    this.verticalSpeed = baseScrollSpeed; // 下方向速度
+    // 横方向 ±2~5px/frame
+    this.horizontalSpeed = (Math.random() < 0.5 ? -1 : 1) * (2 + Math.random() * 3);
     this.color = 'black';
   }
 
   update() {
-    const currentSpeed = tapHold ? this.speed * 0.5 : this.speed;
+    const currentSpeed = tapHold ? this.verticalSpeed * 0.5 : this.verticalSpeed;
     this.y += currentSpeed;
     this.x += this.horizontalSpeed;
-    // 画面端で反射
-    if (this.x < 0 || this.x + this.width > canvas.width) this.horizontalSpeed *= -1;
+
+    // 画面端で跳ね返す
+    if (this.x < 0) { this.x = 0; this.horizontalSpeed *= -1; }
+    if (this.x + this.width > canvas.width) { this.x = canvas.width - this.width; this.horizontalSpeed *= -1; }
   }
 
   draw() {
-    // 将来的に ctx.drawImage(img, this.x, this.y, this.width, this.height) に置き換え可能
     ctx.fillStyle = this.color;
     ctx.fillRect(this.x, this.y, this.width, this.height);
   }
@@ -68,15 +70,16 @@ function gameLoop() {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // --- スコア更新 ---
-  const currentSpeed = tapHold ? scrollSpeed * 0.5 : scrollSpeed;
+  const currentSpeed = tapHold ? baseScrollSpeed * 0.5 : baseScrollSpeed;
+
+  // スコア更新（下方向スクロール距離）
   score += currentSpeed;
   document.getElementById('score').innerText = Math.floor(score) + ' m';
 
-  // --- 障害物生成 ---
+  // 障害物生成
   if (Math.random() < 0.02) obstacles.push(new Obstacle());
 
-  // --- 障害物更新・描画 ---
+  // 障害物更新・描画
   obstacles.forEach((obs, index) => {
     obs.update();
     obs.draw();
@@ -86,7 +89,7 @@ function gameLoop() {
     if (obs.y > canvas.height + 50) obstacles.splice(index, 1);
   });
 
-  // --- 少年描画 ---
+  // 少年描画
   ctx.beginPath();
   ctx.arc(boy.x, boy.y, boy.radius, 0, Math.PI * 2);
   ctx.fillStyle = boy.color;
@@ -137,5 +140,5 @@ function startGame() {
   animationId = requestAnimationFrame(gameLoop);
 }
 
-// --- 初期表示 ---
+// 初期表示
 resetGame();
