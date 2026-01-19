@@ -20,6 +20,12 @@ body {
 /* 問題枠 */
 #question-area {
   margin-top: 24px;
+  width: 90%;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* 縦中央 */
+  align-items: center;     /* 横中央 */
   text-align: center;
 }
 
@@ -38,14 +44,16 @@ body {
 #center-area {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  justify-content: center; /* 縦中央 */
+  align-items: center;     /* 横中央 */
   min-height: 200px;
+  width: 90%;
   margin: 16px;
   padding: 16px;
   background: rgba(255,255,255,0.9);
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  text-align: center;
 }
 
 #result-area.hidden { display: none; }
