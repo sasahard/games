@@ -63,8 +63,8 @@ function handleAnswer(value, btn) {
     btn.classList.add("correct", "disabled");
     currentIndex++;
 
-    // アニメーション用に中央枠にクラス追加（将来の演出）
-    resultArea.classList.add("hidden"); // まだ表示しない
+    // 中央枠に正誤アニメーション表示できる構造
+    resultArea.classList.add("hidden");
 
     if (currentIndex >= problems.length) {
       finishGame();
