@@ -12,6 +12,7 @@ body {
   flex-direction: column;
 }
 
+/* 上部 */
 #top-area {
   padding: 16px;
 }
@@ -20,16 +21,18 @@ body {
   display: none;
 }
 
+/* 段選択 */
 #dan-buttons {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
 }
 
+/* 問題表示 */
 #status {
   display: flex;
   justify-content: space-between;
-  font-size: 18px;
+  align-items: center;
 }
 
 #question {
@@ -37,11 +40,15 @@ body {
   font-weight: bold;
 }
 
-/* 下部固定 */
+#timer {
+  font-size: 16px;
+}
+
+/* 下部固定エリア */
 #bottom-area {
-  margin-top: auto;
   padding: 16px;
   background: #ffffff;
+  min-height: 220px; /* ★重要：高さを保証 */
 }
 
 #answer-buttons {
@@ -50,6 +57,7 @@ body {
   gap: 14px;
 }
 
+/* ボタン共通 */
 button {
   height: 64px;
   font-size: 24px;
@@ -62,5 +70,4 @@ button {
 button:disabled {
   background: #d0d0d0;
   color: #888;
-  transform: scale(0.96);
 }
