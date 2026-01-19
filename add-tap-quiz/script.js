@@ -3,6 +3,7 @@ const soundWrong = document.getElementById("sound-wrong");
 
 const selectScreen = document.getElementById("select-screen");
 const gameScreen = document.getElementById("game-screen");
+const bottomArea = document.getElementById("bottom-area");
 const resultScreen = document.getElementById("result-screen");
 
 const danButtons = document.getElementById("dan-buttons");
@@ -28,12 +29,13 @@ for (let i = 0; i <= 9; i++) {
 
 function startGame(selectedDan) {
   dan = selectedDan;
-  remaining = [...Array(10).keys()]; // 0〜9
+  remaining = [...Array(10).keys()];
 
   selectScreen.classList.add("hidden");
   gameScreen.classList.remove("hidden");
+  bottomArea.classList.remove("hidden");
 
-  createAnswerButtons(); // ★ 最初に一度だけ生成
+  createFixedAnswerButtons(); // ★ 1回だけ生成
 
   startTime = Date.now();
   timerId = setInterval(updateTimer, 100);
@@ -57,16 +59,13 @@ function nextQuestion() {
   questionEl.dataset.answer = dan + value;
 }
 
-function createAnswerButtons() {
+function createFixedAnswerButtons() {
   answerButtons.innerHTML = "";
 
-  const min = dan;
-  const max = dan + 9;
-
   const nums = [];
-  for (let i = min; i <= max; i++) nums.push(i);
+  for (let i = dan; i <= dan + 9; i++) nums.push(i);
 
-  nums.sort(() => Math.random() - 0.5); // 初回のみシャッフル
+  nums.sort(() => Math.random() - 0.5); // 初回のみ
 
   nums.forEach(num => {
     const btn = document.createElement("button");
@@ -96,13 +95,11 @@ function checkAnswer(button, selected) {
 function finishGame() {
   clearInterval(timerId);
   gameScreen.classList.add("hidden");
+  bottomArea.classList.add("hidden");
   resultScreen.classList.remove("hidden");
 
   const t = (Date.now() - startTime) / 1000;
   resultTimeEl.textContent = `タイム：${t.toFixed(1)} 秒`;
 }
 
-retryBtn.onclick = () => {
-  resultScreen.classList.add("hidden");
-  selectScreen.classList.remove("hidden");
-};
+retryBtn.onclick = () => location.reload();
