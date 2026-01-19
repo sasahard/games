@@ -14,32 +14,45 @@ resize();
 // ==========================
 // 背景：星雲 & 星
 // ==========================
-const STAR_COUNT = 220;
+const STAR_COUNT = 520;
 const stars = [];
 const nebulas = [];
 
 // 星生成
 for (let i = 0; i < STAR_COUNT; i++) {
+  const tempShift = Math.random() * 16 - 8; // 色温度の微差
+
   stars.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
-    r: Math.random() * 1.4 + 0.4,
-    alpha: Math.random() * 0.6 + 0.4,
-    glow: Math.random() * 6 + 4,
-    speed: Math.random() * 0.15 + 0.05
+    r: Math.random() * 0.7 + 0.25,
+    baseAlpha: Math.random() * 0.4 + 0.4,
+    glow: Math.random() * 5 + 3,
+    speed: Math.random() * 0.12 + 0.04,
+
+    phase: Math.random() * Math.PI * 2,
+    twinkleSpeed: Math.random() * 0.02 + 0.005,
+
+    color: {
+      r: 245 + tempShift,
+      g: 245,
+      b: 255 - tempShift
+    }
   });
 }
 
 // 星雲生成（奥）
 for (let i = 0; i < 5; i++) {
+  const size = Math.random() * 600 + 500;
+
   nebulas.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
-    r: Math.random() * 600 + 500,
-    color: Math.random() > 0.5 ? "120,160,255" : "180,120,255",
-    alpha: Math.random() * 0.02 + 0.015,
-    vx: (Math.random() - 0.5) * 0.03,
-    vy: (Math.random() - 0.5) * 0.03
+    r: size,
+    color: Math.random() > 0.5 ? "140,170,255" : "180,130,255",
+    alpha: Math.random() * 0.015 + 0.012,
+    vx: (Math.random() - 0.5) * 0.025,
+    vy: (Math.random() - 0.5) * 0.025
   });
 }
 
@@ -153,10 +166,10 @@ function applyTrajectoryForce() {
 // 更新処理（修正元維持）
 // ==========================
 function update() {
-  // 背景更新
   stars.forEach(s => {
     s.y += s.speed;
     if (s.y > canvas.height) s.y = 0;
+    s.phase += s.twinkleSpeed;
   });
 
   nebulas.forEach(n => {
@@ -172,12 +185,8 @@ function update() {
     a.x += a.vx;
     a.y += a.vy;
 
-    if (a.x < ASTEROID_RADIUS || a.x > canvas.width - ASTEROID_RADIUS) {
-      a.vx *= -1;
-    }
-    if (a.y < ASTEROID_RADIUS || a.y > canvas.height - ASTEROID_RADIUS) {
-      a.vy *= -1;
-    }
+    if (a.x < ASTEROID_RADIUS || a.x > canvas.width - ASTEROID_RADIUS) a.vx *= -1;
+    if (a.y < ASTEROID_RADIUS || a.y > canvas.height - ASTEROID_RADIUS) a.vy *= -1;
   });
 
   for (let i = 0; i < asteroids.length; i++) {
@@ -212,7 +221,7 @@ function draw() {
   nebulas.forEach(n => {
     const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
     g.addColorStop(0, `rgba(${n.color}, ${n.alpha})`);
-    g.addColorStop(0.5, `rgba(${n.color}, ${n.alpha * 0.4})`);
+    g.addColorStop(0.6, `rgba(${n.color}, ${n.alpha * 0.25})`);
     g.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = g;
     ctx.beginPath();
@@ -222,9 +231,12 @@ function draw() {
 
   // 星（前）
   stars.forEach(s => {
+    const twinkle = Math.sin(s.phase) * 0.3 + 0.7;
+
     ctx.shadowBlur = s.glow;
-    ctx.shadowColor = "white";
-    ctx.fillStyle = `rgba(255,255,255,${s.alpha})`;
+    ctx.shadowColor = `rgb(${s.color.r},${s.color.g},${s.color.b})`;
+    ctx.fillStyle = `rgba(${s.color.r},${s.color.g},${s.color.b},${s.baseAlpha * twinkle})`;
+
     ctx.beginPath();
     ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
     ctx.fill();
