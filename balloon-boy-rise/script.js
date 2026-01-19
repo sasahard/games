@@ -35,7 +35,7 @@ class Obstacle {
 
     if (Math.random() < 0.5) {
       this.x = -this.width;
-      this.horizontalSpeed = 0.8 + Math.random() * 0.4; // 少し遅め
+      this.horizontalSpeed = 0.8 + Math.random() * 0.4; // ゆっくり横移動
     } else {
       this.x = canvas.width;
       this.horizontalSpeed = -(0.8 + Math.random() * 0.4);
@@ -45,9 +45,10 @@ class Obstacle {
     this.color = 'black';
   }
 
-  update(delta) {
-    const currentSpeed = tapHold ? this.verticalSpeed * 0.5 : this.verticalSpeed;
-    this.y += currentSpeed;
+  update(delta, scrollSpeed) {
+    // バルーン上昇に合わせて下に流れる
+    const effectiveSpeed = tapHold ? scrollSpeed * 0.5 : scrollSpeed;
+    this.y += effectiveSpeed;
     this.x += this.horizontalSpeed;
   }
 
@@ -95,7 +96,7 @@ function gameLoop(timestamp) {
 
   // --- 障害物更新・描画 ---
   obstacles.forEach((obs, index) => {
-    obs.update(delta);
+    obs.update(delta, baseScrollSpeed);
     obs.draw();
 
     if (checkCollision(obs)) endGame();
