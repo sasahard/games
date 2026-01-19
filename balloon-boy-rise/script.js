@@ -10,7 +10,7 @@ window.addEventListener('resize', resizeCanvas);
 
 let gameOver = false;
 let score = 0;
-let baseScrollSpeed = 0.01; // 超ゆっくり上昇
+let baseScrollSpeed = 0.01; // バルーン上昇速度
 let tapHold = false;
 let obstacles = [];
 let animationId = null;
@@ -18,7 +18,6 @@ let lastTime = null;
 
 // --- 少年（風船） ---
 const boy = {
-  centerX: canvas.width / 2,
   x: canvas.width / 2,
   y: canvas.height / 2,
   radius: 16,
@@ -31,23 +30,19 @@ class Obstacle {
   constructor() {
     this.width = 32;
     this.height = 32;
-    this.y = Math.random() * canvas.height * 0.5 - 50;
-
+    this.y = Math.random() * canvas.height * 0.8; // 画面内ランダム
     if (Math.random() < 0.5) {
       this.x = -this.width;
-      this.horizontalSpeed = 0.8 + Math.random() * 0.4; // 横方向は一定速度
+      this.speedX = 0.8 + Math.random() * 0.4;
     } else {
       this.x = canvas.width;
-      this.horizontalSpeed = -(0.8 + Math.random() * 0.4);
+      this.speedX = -(0.8 + Math.random() * 0.4);
     }
-
     this.color = 'black';
   }
 
-  update(delta, scrollSpeed) {
-    const effectiveSpeed = tapHold ? scrollSpeed * 0.5 : scrollSpeed;
-    this.y += effectiveSpeed;  // 縦方向はスクロール追従
-    this.x += this.horizontalSpeed; // 横はまっすぐ
+  update() {
+    this.x += this.speedX; // 横移動のみ
   }
 
   draw() {
@@ -56,7 +51,7 @@ class Obstacle {
   }
 
   isOutOfScreen() {
-    return this.x + this.width < 0 || this.x > canvas.width || this.y > canvas.height + 50;
+    return this.x + this.width < 0 || this.x > canvas.width;
   }
 }
 
@@ -83,9 +78,8 @@ function gameLoop(timestamp) {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const currentSpeed = tapHold ? baseScrollSpeed * 0.5 : baseScrollSpeed;
-
   // スコア更新
+  const currentSpeed = tapHold ? baseScrollSpeed * 0.5 : baseScrollSpeed;
   score += currentSpeed * delta * 60;
   document.getElementById('score').innerText = score.toFixed(2) + ' m';
 
@@ -94,7 +88,7 @@ function gameLoop(timestamp) {
 
   // --- 障害物更新・描画 ---
   obstacles.forEach((obs, index) => {
-    obs.update(delta, baseScrollSpeed);
+    obs.update();
     obs.draw();
 
     if (checkCollision(obs)) endGame();
@@ -104,7 +98,7 @@ function gameLoop(timestamp) {
 
   // --- 少年横揺れ（ふわふわ） ---
   if (!boy.targetX || Math.random() < 0.01) {
-    boy.targetX = boy.centerX + (Math.random() * 64 - 32); // ±32px
+    boy.targetX = canvas.width / 2 + (Math.random() * 64 - 32); // ±32px
   }
   boy.x += (boy.targetX - boy.x) * 0.05;
 
@@ -150,8 +144,8 @@ function resetGame() {
   obstacles = [];
   score = 0;
   lastTime = null;
-  boy.x = boy.centerX;
-  boy.targetX = boy.centerX;
+  boy.x = canvas.width / 2;
+  boy.targetX = canvas.width / 2;
   startScreen.classList.remove('hidden');
   document.getElementById('game-over').classList.add('hidden');
 }
