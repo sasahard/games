@@ -71,7 +71,7 @@ function createStars() {
       glow: Math.random() * 5 + 4,
       speed: Math.random() * 0.03 + 0.01,
       twinklePhase: Math.random() * Math.PI * 2,
-      colorOffset: Math.random() * 30 - 15 // 色温度少しランダム
+      colorOffset: Math.random() * 30 - 15
     });
   }
 }
@@ -86,6 +86,9 @@ let trajectory = [];
 let drawing = false;
 let waitingNext = false;
 let gameState = "title"; // title / playing
+
+let score = 0;
+let highScore = 0;
 
 const shotsEl = document.getElementById("shots");
 const messageEl = document.getElementById("message");
@@ -112,7 +115,8 @@ function createAsteroids() {
       x, y,
       vx: 0,
       vy: 0,
-      alive: true
+      alive: true,
+      scored: false
     });
   }
 }
@@ -220,6 +224,15 @@ function update() {
     }
   }
 
+  // スコア加算
+  asteroids.forEach(a => {
+    if (!a.alive && !a.scored) {
+      score++;
+      a.scored = true;
+      if (score > highScore) highScore = score;
+    }
+  });
+
   // 全消しで自動再描画
   if (asteroids.every(a => !a.alive) && !waitingNext) {
     waitingNext = true;
@@ -229,6 +242,7 @@ function update() {
     }, 700);
   }
 
+  // SHOTS表示
   shotsEl.textContent = `shots: ${shotsLeft}`;
 }
 
@@ -275,31 +289,34 @@ function draw() {
     ctx.fill();
   });
 
-  // タイトル（タイトル状態のみ）
+  // タイトル
   if (gameState === "title") {
     const text = "Trajectory Chain";
-
-    // 画面幅に収まるようにサイズ調整
-    const maxFontSize = 56;
-    const fontSize = Math.min(maxFontSize, viewWidth / (text.length * 0.6));
-    ctx.font = `bold ${fontSize}px 'Orbitron', sans-serif`;
-
+    ctx.font = "bold 48px 'Orbitron', sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
     // ライトセーバー風グロー
-    const glowLayers = 6;
-    for (let i = glowLayers; i > 0; i--) {
-      ctx.shadowBlur = i * 20; // グロー広がり
-      ctx.shadowColor = `rgba(100,200,255,${0.03 * i})`; // 青白い光
+    for (let i = 5; i > 0; i--) {
+      ctx.shadowBlur = i * 20;
+      ctx.shadowColor = `rgba(150,200,255,${0.05 * i})`;
       ctx.fillStyle = "white";
       ctx.fillText(text, viewWidth / 2, viewHeight / 2 - 20);
     }
-
-    // 中心は通常の白
     ctx.shadowBlur = 0;
+  }
+
+  // UI：右上 SCORE / HIGH SCORE
+  ctx.font = "13px 'Orbitron', sans-serif";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "top";
+
+  if (gameState === "playing") {
     ctx.fillStyle = "white";
-    ctx.fillText(text, viewWidth / 2, viewHeight / 2 - 20);
+    ctx.fillText(`SCORE: ${score}`, viewWidth - 20, 16);
+  } else if (gameState === "title") {
+    ctx.fillStyle = "white";
+    ctx.fillText(`HIGH SCORE: ${highScore}`, viewWidth - 20, 16);
   }
 }
 
@@ -320,5 +337,6 @@ startBtn.addEventListener("click", () => {
   gameState = "playing";
   startBtn.style.display = "none";
   messageEl.textContent = "";
+  score = 0;
   createAsteroids();
 });
