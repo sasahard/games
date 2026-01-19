@@ -1,4 +1,4 @@
-/* 全体のリセット */
+/* 全体リセット */
 * {
   margin: 0;
   padding: 0;
@@ -10,7 +10,7 @@ body, html {
   height: 100%;
   overflow: hidden;
   font-family: sans-serif;
-  background: #87ceeb; /* 空色 */
+  background: #87ceeb;
 }
 
 #game-container {
@@ -23,7 +23,7 @@ body, html {
   display: block;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to top, #87ceeb, #ffffff); /* 簡単な空グラデーション */
+  background: linear-gradient(to top, #87ceeb, #ffffff);
 }
 
 #score {
@@ -36,14 +36,14 @@ body, html {
   color: #333;
 }
 
-#game-over {
+#start-screen, #game-over {
   position: absolute;
   top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
   font-size: 32px;
-  color: red;
+  color: #333;
 }
 
 .hidden {
