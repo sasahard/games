@@ -27,15 +27,17 @@ class Obstacle {
   constructor() {
     this.width = 40;
     this.height = 40;
-    this.y = Math.random() * canvas.height * 0.5 - 50; // 少し上方にランダム
+    this.y = Math.random() * canvas.height * 0.5 - 50; // 上方にランダムに出現
+
     // 左右どちらかから出現
     if (Math.random() < 0.5) {
       this.x = -this.width; // 左から
-      this.horizontalSpeed = 5 + Math.random() * 3; // 右方向
+      this.horizontalSpeed = 3 + Math.random(); // 右方向 3~4 px/frame
     } else {
       this.x = canvas.width; // 右から
-      this.horizontalSpeed = -(5 + Math.random() * 3); // 左方向
+      this.horizontalSpeed = -(3 + Math.random()); // 左方向 -3~-4 px/frame
     }
+
     this.verticalSpeed = baseScrollSpeed;
     this.color = 'black';
   }
@@ -91,7 +93,7 @@ function gameLoop() {
 
     if (checkCollision(obs)) endGame();
 
-    if (obs.isOutOfScreen()) obstacles.splice(index, 1); // 画面外で削除
+    if (obs.isOutOfScreen()) obstacles.splice(index, 1);
   });
 
   // 少年描画
