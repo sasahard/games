@@ -1,3 +1,8 @@
+:root {
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -14,21 +19,20 @@ body {
 
 /* 上部 */
 #top-area {
-  padding: 16px;
+  padding: calc(16px + var(--safe-top)) 16px 8px;
 }
 
-.hidden {
-  display: none;
+h1 {
+  margin: 0 0 8px;
+  text-align: center;
 }
 
-/* 段選択 */
-#dan-buttons {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+.guide-text {
+  text-align: center;
+  font-size: 18px;
 }
 
-/* 問題表示 */
+/* 状態表示 */
 #status {
   display: flex;
   justify-content: space-between;
@@ -36,7 +40,7 @@ body {
 }
 
 #question {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: bold;
 }
 
@@ -44,23 +48,29 @@ body {
   font-size: 16px;
 }
 
-/* 下部固定エリア */
-#bottom-area {
-  padding: 16px;
-  background: #ffffff;
-  min-height: 220px; /* ★重要：高さを保証 */
+.hidden {
+  display: none;
 }
 
+/* 下部固定エリア（安全圏内に寄せる） */
+#bottom-area {
+  margin-top: auto;
+  padding: 16px 16px calc(24px + var(--safe-bottom));
+  background: #ffffff;
+}
+
+/* 共通ボタングリッド */
+#dan-buttons,
 #answer-buttons {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 14px;
 }
 
-/* ボタン共通 */
+/* ボタン */
 button {
   height: 64px;
-  font-size: 24px;
+  font-size: 22px;
   border: none;
   border-radius: 18px;
   background: #4caf50;
