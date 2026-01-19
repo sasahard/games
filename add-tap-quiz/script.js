@@ -12,6 +12,10 @@ let problems = [];
 let currentIndex = 0;
 let startTime = null;
 
+// フィードバック用メッセージ
+const correctMessages = ["すごい！", "ナイス！", "やったね！", "グッド！", "最高！"];
+const wrongMessages   = ["もう一回！", "だいじょうぶ！", "チャレンジ！", "次にいこう！", "がんばろう！"];
+
 // 初期表示：段選択
 showStageSelect();
 
@@ -64,7 +68,7 @@ function handleAnswer(value, btn) {
 
   if (value === correct) {
     btn.classList.add("correct", "disabled");
-    showFeedback("アタリ！");
+    showFeedback(true);
     currentIndex++;
     if (currentIndex >= problems.length) {
       setTimeout(finishGame, 600);
@@ -73,14 +77,26 @@ function handleAnswer(value, btn) {
     }
   } else {
     btn.classList.add("wrong");
-    showFeedback("ハズレ！");
+    showFeedback(false);
     setTimeout(() => btn.classList.remove("wrong"), 400);
   }
 }
 
-function showFeedback(text) {
+function showFeedback(isCorrect) {
+  feedbackEl.classList.remove("correct", "wrong");
+  let text = "";
+
+  if (isCorrect) {
+    text = correctMessages[Math.floor(Math.random() * correctMessages.length)];
+    feedbackEl.classList.add("correct");
+  } else {
+    text = wrongMessages[Math.floor(Math.random() * wrongMessages.length)];
+    feedbackEl.classList.add("wrong");
+  }
+
   feedbackEl.textContent = text;
   feedbackEl.classList.remove("hidden");
+
   setTimeout(() => feedbackEl.classList.add("hidden"), 600);
 }
 
