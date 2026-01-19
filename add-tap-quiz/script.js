@@ -61,9 +61,12 @@ function handleAnswer(value, btn) {
 
   if (value === correct) {
     btn.classList.add("correct", "disabled");
+
+    // 星を飛ばす
+    spawnStar();
+
     currentIndex++;
 
-    // 中央枠に正誤アニメーション表示できる構造
     resultArea.classList.add("hidden");
 
     if (currentIndex >= problems.length) {
@@ -75,6 +78,22 @@ function handleAnswer(value, btn) {
     btn.classList.add("wrong");
     setTimeout(() => btn.classList.remove("wrong"), 400);
   }
+}
+
+function spawnStar() {
+  const star = document.createElement("div");
+  star.className = "star";
+  star.textContent = "⭐"; // JSに埋め込んだ絵文字
+
+  const centerArea = document.getElementById("center-area");
+  const centerRect = centerArea.getBoundingClientRect();
+  const x = Math.random() * (centerRect.width - 32);
+  star.style.left = `${x}px`;
+  star.style.top = `0px`;
+
+  centerArea.appendChild(star);
+
+  star.addEventListener("animationend", () => star.remove());
 }
 
 function finishGame() {
