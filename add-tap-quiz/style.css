@@ -2,9 +2,7 @@
   --safe-bottom: env(safe-area-inset-bottom);
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -16,32 +14,41 @@ body {
   min-height: 100svh;
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
 
-#top-area {
-  padding: 32px 16px 16px;
+/* 問題枠 */
+#question-area {
+  margin-top: 24px;
   text-align: center;
+}
+
+#question {
+  font-size: 36px;
+  font-weight: bold;
+  margin-bottom: 8px;
 }
 
 #status {
   font-size: 14px;
   color: #666;
-  margin-bottom: 8px;
 }
 
-#question {
-  font-size: 32px;
-  font-weight: bold;
+/* 中央枠：結果・正誤アニメーション表示用 */
+#center-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  margin: 16px;
+  padding: 16px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
 }
 
-#result-area {
-  text-align: center;
-  margin-top: 16px;
-}
-
-#result-area.hidden {
-  display: none;
-}
+#result-area.hidden { display: none; }
 
 #clear-text {
   font-size: 28px;
@@ -63,6 +70,7 @@ body {
   color: white;
 }
 
+/* 下部ボタン */
 #bottom-area {
   margin-top: auto;
   padding: 16px 16px calc(56px + var(--safe-bottom));
@@ -70,6 +78,7 @@ body {
   backdrop-filter: blur(12px);
   border-top-left-radius: 28px;
   border-top-right-radius: 28px;
+  width: 100%;
 }
 
 #buttons {
@@ -78,6 +87,7 @@ body {
   gap: 12px;
 }
 
+/* 数字ボタン */
 .answer-btn {
   font-size: 22px;
   padding: 18px 0;
