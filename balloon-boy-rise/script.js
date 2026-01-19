@@ -30,19 +30,20 @@ class Obstacle {
   constructor() {
     this.width = 32;
     this.height = 32;
-    this.y = Math.random() * canvas.height * 0.8; // 画面内ランダム
+    this.y = Math.random() * canvas.height * 0.8; // ランダム
     if (Math.random() < 0.5) {
       this.x = -this.width;
-      this.speedX = 0.8 + Math.random() * 0.4;
+      this.speedX = 0.5 + Math.random() * 0.3; // ゆっくり横移動
     } else {
       this.x = canvas.width;
-      this.speedX = -(0.8 + Math.random() * 0.4);
+      this.speedX = -(0.5 + Math.random() * 0.3);
     }
     this.color = 'black';
   }
 
-  update() {
-    this.x += this.speedX; // 横移動のみ
+  update(currentSpeed) {
+    this.x += this.speedX; // 横移動
+    this.y += currentSpeed; // 下方向に流れる
   }
 
   draw() {
@@ -51,7 +52,7 @@ class Obstacle {
   }
 
   isOutOfScreen() {
-    return this.x + this.width < 0 || this.x > canvas.width;
+    return this.x + this.width < 0 || this.x > canvas.width || this.y > canvas.height + 50;
   }
 }
 
@@ -78,8 +79,10 @@ function gameLoop(timestamp) {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // スコア更新
+  // バルーン上昇速度（タップで減速）
   const currentSpeed = tapHold ? baseScrollSpeed * 0.5 : baseScrollSpeed;
+
+  // スコア更新
   score += currentSpeed * delta * 60;
   document.getElementById('score').innerText = score.toFixed(2) + ' m';
 
@@ -88,7 +91,7 @@ function gameLoop(timestamp) {
 
   // --- 障害物更新・描画 ---
   obstacles.forEach((obs, index) => {
-    obs.update();
+    obs.update(currentSpeed); // 下に流す
     obs.draw();
 
     if (checkCollision(obs)) endGame();
