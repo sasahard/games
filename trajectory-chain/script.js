@@ -27,7 +27,7 @@ let asteroids = [];
 let shotsLeft = MAX_SHOTS;
 let trajectory = [];
 let drawing = false;
-let gameState = "playing"; // playing / clear / over
+let gameState = "playing";
 
 const shotsEl = document.getElementById("shots");
 const messageEl = document.getElementById("message");
@@ -80,7 +80,6 @@ canvas.addEventListener("pointerup", () => {
 function applyTrajectoryForce() {
   if (trajectory.length < 2) return;
 
-  // 軌跡全体の方向ベクトル
   const start = trajectory[0];
   const end = trajectory[trajectory.length - 1];
   const dirX = end.x - start.x;
@@ -123,7 +122,6 @@ function update() {
     a.x += a.vx;
     a.y += a.vy;
 
-    // 画面端反射
     if (a.x < ASTEROID_RADIUS || a.x > canvas.width - ASTEROID_RADIUS) {
       a.vx *= -1;
     }
@@ -132,7 +130,6 @@ function update() {
     }
   });
 
-  // 衝突判定
   for (let i = 0; i < asteroids.length; i++) {
     for (let j = i + 1; j < asteroids.length; j++) {
       const a = asteroids[i];
@@ -150,7 +147,6 @@ function update() {
     }
   }
 
-  // 勝敗判定
   const aliveCount = asteroids.filter(a => a.alive).length;
 
   if (aliveCount === 0) {
@@ -175,18 +171,38 @@ function draw() {
     if (!a.alive) return;
     ctx.beginPath();
     ctx.arc(a.x, a.y, ASTEROID_RADIUS, 0, Math.PI * 2);
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = "#ffffff";
     ctx.fill();
   });
 
-  // 軌跡
+  // ★ グラデーション軌跡 ★
   if (trajectory.length > 1) {
+    const start = trajectory[0];
+    const end = trajectory[trajectory.length - 1];
+
+    const gradient = ctx.createLinearGradient(
+      start.x, start.y,
+      end.x, end.y
+    );
+
+    gradient.addColorStop(0.0, "rgba(150, 255, 255, 0.9)");
+    gradient.addColorStop(0.5, "rgba(120, 180, 255, 0.9)");
+    gradient.addColorStop(1.0, "rgba(255, 120, 255, 0.9)");
+
     ctx.beginPath();
-    ctx.moveTo(trajectory[0].x, trajectory[0].y);
+    ctx.moveTo(start.x, start.y);
     trajectory.forEach(p => ctx.lineTo(p.x, p.y));
-    ctx.strokeStyle = "#0ff";
-    ctx.lineWidth = 2;
+
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.shadowColor = "rgba(180, 220, 255, 0.6)";
+    ctx.shadowBlur = 8;
+
     ctx.stroke();
+
+    ctx.shadowBlur = 0; // 他描画に影響しないよう戻す
   }
 }
 
