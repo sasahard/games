@@ -65,15 +65,14 @@ function handleAnswer(value, btn) {
   if (value === correct) {
     btn.classList.add("correct", "disabled");
 
-    // 連続正解ボーナス
+    // 連続正解ボーナス（最大5個）
     comboCount++;
-    const starsToSpawn = Math.min(comboCount, 3);
+    const starsToSpawn = Math.min(comboCount, 5);
     for (let i = 0; i < starsToSpawn; i++) {
       spawnStar();
     }
 
     currentIndex++;
-
     resultArea.classList.add("hidden");
 
     if (currentIndex >= problems.length) {
@@ -91,19 +90,42 @@ function handleAnswer(value, btn) {
 function spawnStar() {
   const star = document.createElement("div");
   star.className = "star";
-  star.textContent = "⭐"; // JSに埋め込んだ絵文字
+  star.textContent = "⭐";
 
-  // 星の大きさランダム化
-  const size = Math.floor(Math.random() * (48 - 24 + 1)) + 24;
+  // 星の大きさランダム化（16px〜48px）
+  const size = Math.floor(Math.random() * (48 - 16 + 1)) + 16;
   star.style.fontSize = `${size}px`;
+
+  // アニメーション時間ランダム化（0.7〜1.2秒）
+  const duration = (Math.random() * (1.2 - 0.7) + 0.7).toFixed(2);
 
   const centerArea = document.getElementById("center-area");
   const centerRect = centerArea.getBoundingClientRect();
-  const x = Math.random() * (centerRect.width - size);
-  star.style.left = `${x}px`;
+
+  // ランダムXスタート位置
+  const startX = Math.random() * (centerRect.width - size);
+  star.style.left = `${startX}px`;
   star.style.top = `0px`;
 
+  // ランダム左右移動量（-30px〜30px）
+  const deltaX = Math.floor(Math.random() * 61) - 30;
+
   centerArea.appendChild(star);
+
+  // JSで左右+上へのアニメーション
+  star.animate(
+    [
+      { transform: `translateX(0) translateY(0) scale(1)`, opacity: 1 },
+      { transform: `translateX(${deltaX}px) translateY(-60px) scale(1.3)`, opacity: 1 },
+      { transform: `translateX(${deltaX/2}px) translateY(-120px) scale(0.8)`, opacity: 0 }
+    ],
+    {
+      duration: duration * 1000,
+      easing: "ease-out",
+      fill: "forwards"
+    }
+  );
+
   star.addEventListener("animationend", () => star.remove());
 }
 
