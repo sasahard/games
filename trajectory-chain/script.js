@@ -7,18 +7,19 @@ const ctx = canvas.getContext("2d");
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
+  createStars(); // リサイズ時に星を作り直す
 }
 window.addEventListener("resize", resize);
 resize();
 
 // ==========================
-// ゲーム定数
+// ゲーム定数（MVP最小）
 // ==========================
 const ASTEROID_COUNT = 10;
 const ASTEROID_RADIUS = 12;
 const MAX_SHOTS = 5;
 
-// 軌跡による力場
+// 軌跡による力場（内部ロジックのみ）
 const FORCE_RADIUS = 140;
 const FORCE_POWER = 6;
 
@@ -35,6 +36,24 @@ const shotsEl = document.getElementById("shots");
 const messageEl = document.getElementById("message");
 
 // ==========================
+// 星空背景
+// ==========================
+const STAR_COUNT = 300;
+let stars = [];
+
+function createStars() {
+  stars = [];
+  for (let i = 0; i < STAR_COUNT; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.5 + 0.3, // 星の大きさ
+      a: Math.random() * 0.5 + 0.3 // 明るさ
+    });
+  }
+}
+
+// ==========================
 // 小惑星生成
 // ==========================
 function createAsteroids() {
@@ -49,10 +68,11 @@ function createAsteroids() {
     });
   }
 }
+createStars();
 createAsteroids();
 
 // ==========================
-// 入力：軌跡を描く
+// 入力：軌跡を描く（※可視化しない）
 // ==========================
 canvas.addEventListener("pointerdown", (e) => {
   if (gameState !== "playing") return;
@@ -125,7 +145,6 @@ function update() {
     a.x += a.vx;
     a.y += a.vy;
 
-    // 画面端反射
     if (a.x < ASTEROID_RADIUS || a.x > canvas.width - ASTEROID_RADIUS) {
       a.vx *= -1;
     }
@@ -134,7 +153,6 @@ function update() {
     }
   });
 
-  // 衝突判定
   for (let i = 0; i < asteroids.length; i++) {
     for (let j = i + 1; j < asteroids.length; j++) {
       const a = asteroids[i];
@@ -166,10 +184,20 @@ function update() {
 }
 
 // ==========================
-// 描画処理
+// 描画
 // ==========================
 function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // 背景（宇宙）
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // 星空
+  stars.forEach(s => {
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${s.a})`;
+    ctx.fill();
+  });
 
   // 小惑星
   asteroids.forEach(a => {
@@ -179,34 +207,6 @@ function draw() {
     ctx.fillStyle = "#ffffff";
     ctx.fill();
   });
-
-  // 重力フィールド風・軌跡
-  if (trajectory.length > 1) {
-    ctx.save();
-
-    const layers = [
-      { width: 22, alpha: 0.04, blur: 36 },
-      { width: 12, alpha: 0.07, blur: 22 },
-      { width: 5,  alpha: 0.12, blur: 10 }
-    ];
-
-    layers.forEach(layer => {
-      ctx.beginPath();
-      ctx.moveTo(trajectory[0].x, trajectory[0].y);
-      trajectory.forEach(p => ctx.lineTo(p.x, p.y));
-
-      ctx.strokeStyle = `rgba(170, 220, 255, ${layer.alpha})`;
-      ctx.lineWidth = layer.width;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.shadowColor = "rgba(160, 210, 255, 0.6)";
-      ctx.shadowBlur = layer.blur;
-
-      ctx.stroke();
-    });
-
-    ctx.restore();
-  }
 }
 
 // ==========================
