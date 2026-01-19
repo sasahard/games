@@ -20,18 +20,21 @@ const nebulas = [];
 
 // 星生成
 for (let i = 0; i < STAR_COUNT; i++) {
-  const tempShift = Math.random() * 16 - 8; // 色温度の微差
+  const tempShift = Math.random() * 20 - 10;
 
   stars.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
     r: Math.random() * 0.7 + 0.25,
-    baseAlpha: Math.random() * 0.4 + 0.4,
-    glow: Math.random() * 5 + 3,
-    speed: Math.random() * 0.12 + 0.04,
+
+    baseAlpha: Math.random() * 0.4 + 0.6, // ← 輝度アップ
+    glow: Math.random() * 7 + 6,          // ← グロー強化
+
+    vx: -(Math.random() * 0.18 + 0.08),   // 右下 → 左上
+    vy: -(Math.random() * 0.18 + 0.08),
 
     phase: Math.random() * Math.PI * 2,
-    twinkleSpeed: Math.random() * 0.02 + 0.005,
+    twinkleSpeed: Math.random() * 0.025 + 0.01,
 
     color: {
       r: 245 + tempShift,
@@ -73,7 +76,7 @@ let asteroids = [];
 let shotsLeft = MAX_SHOTS;
 let trajectory = [];
 let drawing = false;
-let gameState = "ready"; // ready / playing
+let gameState = "ready";
 
 const shotsEl = document.getElementById("shots");
 const messageEl = document.getElementById("message");
@@ -163,12 +166,16 @@ function applyTrajectoryForce() {
 }
 
 // ==========================
-// 更新処理（修正元維持）
+// 更新処理
 // ==========================
 function update() {
   stars.forEach(s => {
-    s.y += s.speed;
-    if (s.y > canvas.height) s.y = 0;
+    s.x += s.vx;
+    s.y += s.vy;
+
+    if (s.x < 0) s.x = canvas.width;
+    if (s.y < 0) s.y = canvas.height;
+
     s.phase += s.twinkleSpeed;
   });
 
@@ -217,7 +224,7 @@ function draw() {
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // 星雲（最奥）
+  // 星雲
   nebulas.forEach(n => {
     const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
     g.addColorStop(0, `rgba(${n.color}, ${n.alpha})`);
@@ -229,9 +236,9 @@ function draw() {
     ctx.fill();
   });
 
-  // 星（前）
+  // 星（強輝度）
   stars.forEach(s => {
-    const twinkle = Math.sin(s.phase) * 0.3 + 0.7;
+    const twinkle = Math.sin(s.phase) * 0.45 + 0.75;
 
     ctx.shadowBlur = s.glow;
     ctx.shadowColor = `rgb(${s.color.r},${s.color.g},${s.color.b})`;
