@@ -10,39 +10,42 @@ window.addEventListener('resize', resizeCanvas);
 
 let gameOver = false;
 let score = 0;
-let baseScrollSpeed = 3; // 下方向スクロール基本速度
+let baseScrollSpeed = 3;
 let tapHold = false;
 let obstacles = [];
 let animationId = null;
+let lastTime = null;
 
+// --- 少年（風船） ---
 const boy = {
+  centerX: canvas.width / 2,
   x: canvas.width / 2,
   y: canvas.height / 2,
-  radius: 20,
-  color: 'red'
+  radius: 16,
+  color: 'red',
+  targetX: canvas.width / 2
 };
 
 // --- 障害物クラス ---
 class Obstacle {
   constructor() {
-    this.width = 40;
-    this.height = 40;
-    this.y = Math.random() * canvas.height * 0.5 - 50; // 上方にランダムに出現
+    this.width = 32;
+    this.height = 32;
+    this.y = Math.random() * canvas.height * 0.5 - 50;
 
-    // 左右どちらかから出現
     if (Math.random() < 0.5) {
-      this.x = -this.width; // 左から
-      this.horizontalSpeed = 3 + Math.random(); // 右方向 3~4 px/frame
+      this.x = -this.width;
+      this.horizontalSpeed = 3 + Math.random();
     } else {
-      this.x = canvas.width; // 右から
-      this.horizontalSpeed = -(3 + Math.random()); // 左方向 -3~-4 px/frame
+      this.x = canvas.width;
+      this.horizontalSpeed = -(3 + Math.random());
     }
 
     this.verticalSpeed = baseScrollSpeed;
     this.color = 'black';
   }
 
-  update() {
+  update(delta) {
     const currentSpeed = tapHold ? this.verticalSpeed * 0.5 : this.verticalSpeed;
     this.y += currentSpeed;
     this.x += this.horizontalSpeed;
@@ -72,23 +75,27 @@ function checkCollision(rect) {
 }
 
 // --- ゲームループ ---
-function gameLoop() {
+function gameLoop(timestamp) {
   if (gameOver) return;
+
+  if (!lastTime) lastTime = timestamp;
+  const delta = (timestamp - lastTime) / 1000;
+  lastTime = timestamp;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   const currentSpeed = tapHold ? baseScrollSpeed * 0.5 : baseScrollSpeed;
 
   // スコア更新
-  score += currentSpeed;
+  score += currentSpeed * delta * 60;
   document.getElementById('score').innerText = Math.floor(score) + ' m';
 
-  // 障害物生成
+  // --- 障害物生成 ---
   if (Math.random() < 0.02) obstacles.push(new Obstacle());
 
-  // 障害物更新・描画
+  // --- 障害物更新・描画 ---
   obstacles.forEach((obs, index) => {
-    obs.update();
+    obs.update(delta);
     obs.draw();
 
     if (checkCollision(obs)) endGame();
@@ -96,7 +103,15 @@ function gameLoop() {
     if (obs.isOutOfScreen()) obstacles.splice(index, 1);
   });
 
-  // 少年描画
+  // --- 少年横揺れ（ふわふわ） ---
+  if (!boy.targetX || Math.random() < 0.01) {
+    // 2秒に一度くらい目標横位置を更新
+    boy.targetX = boy.centerX + (Math.random() * 40 - 20); // 中心から±20px
+  }
+  // 少しずつ目標Xに近づける
+  boy.x += (boy.targetX - boy.x) * 0.05;
+
+  // --- 少年描画 ---
   ctx.beginPath();
   ctx.arc(boy.x, boy.y, boy.radius, 0, Math.PI * 2);
   ctx.fillStyle = boy.color;
@@ -137,6 +152,9 @@ function resetGame() {
   gameOver = false;
   obstacles = [];
   score = 0;
+  lastTime = null;
+  boy.x = boy.centerX;
+  boy.targetX = boy.centerX;
   startScreen.classList.remove('hidden');
   document.getElementById('game-over').classList.add('hidden');
 }
