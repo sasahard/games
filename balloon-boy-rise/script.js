@@ -1,31 +1,27 @@
 // ゲーム基本設定
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
 
 let gameOver = false;
 let score = 0;
-let speed = 2; // 自動上昇速度
+let speed = 2;
 let tapHold = false;
+let obstacles = [];
 
 // 少年キャラクター
 const boy = {
-  x: canvas.width / 2,
-  y: canvas.height - 100,
+  x: window.innerWidth / 2,
+  y: window.innerHeight - 100,
   radius: 20,
   color: 'red'
 };
-
-// 障害物リスト
-let obstacles = [];
 
 // 障害物クラス
 class Obstacle {
   constructor() {
     this.width = 40;
     this.height = 40;
-    this.x = Math.random() < 0.5 ? -50 : canvas.width + 50; // 左右どちらから出るか
+    this.x = Math.random() < 0.5 ? -50 : canvas.width + 50;
     this.y = Math.random() * (canvas.height - 100);
     this.speed = 3 + Math.random() * 2;
     this.direction = this.x < 0 ? 1 : -1;
@@ -82,12 +78,10 @@ function gameLoop() {
     obs.update();
     obs.draw();
 
-    // 衝突判定
     if (checkCollision(obs)) {
       endGame();
     }
 
-    // 画面外に出たら削除
     if (obs.x < -100 || obs.x > canvas.width + 100) {
       obstacles.splice(index, 1);
     }
@@ -111,12 +105,8 @@ function endGame() {
 
 // リトライ
 document.getElementById('retry-button').addEventListener('click', () => {
-  gameOver = false;
-  obstacles = [];
-  boy.y = canvas.height - 100;
-  score = 0;
-  document.getElementById('game-over').classList.add('hidden');
-  gameLoop();
+  resetGame();
+  startGame();
 });
 
 // タップ操作
@@ -125,11 +115,31 @@ canvas.addEventListener('mouseup', () => tapHold = false);
 canvas.addEventListener('touchstart', () => tapHold = true);
 canvas.addEventListener('touchend', () => tapHold = false);
 
+// ゲーム開始ボタン
+const startScreen = document.getElementById('start-screen');
+startScreen.addEventListener('click', () => {
+  resetGame();
+  startGame();
+});
+
+// 初期化
+function resetGame() {
+  gameOver = false;
+  obstacles = [];
+  boy.y = canvas.height - 100;
+  score = 0;
+  document.getElementById('game-over').classList.add('hidden');
+  startScreen.classList.add('hidden');
+}
+
 // ゲーム開始
-gameLoop();
+function startGame() {
+  gameLoop();
+}
 
 // ウィンドウリサイズ対応
 window.addEventListener('resize', () => {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
+  boy.x = canvas.width / 2;
 });
