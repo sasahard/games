@@ -1,14 +1,14 @@
 body {
   margin: 0;
-  font-family: sans-serif;
-  background: #f3f6fb;
-  text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f2f4f8;
 }
 
 #app {
-  max-width: 480px;
+  max-width: 390px; /* iPhone想定 */
   margin: 0 auto;
   padding: 16px;
+  text-align: center;
 }
 
 h1 {
@@ -19,30 +19,47 @@ h1 {
   display: none;
 }
 
-#dan-buttons,
-#answer-buttons {
+#dan-buttons {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-  margin-top: 16px;
-}
-
-button {
-  padding: 16px;
-  font-size: 20px;
-  border: none;
-  border-radius: 8px;
-  background: #4caf50;
-  color: #fff;
-}
-
-button:disabled {
-  background: #ccc;
 }
 
 #status {
   display: flex;
   justify-content: space-between;
-  font-size: 18px;
+  align-items: center;
   margin-bottom: 12px;
+  font-size: 18px;
+}
+
+#question {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+#answer-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+button {
+  height: 64px;
+  font-size: 24px;
+  border: none;
+  border-radius: 16px;
+  background: #4caf50;
+  color: #fff;
+}
+
+button:disabled {
+  background: #d0d0d0;
+  color: #888;
+  transform: scale(0.96);
+}
+
+#retry {
+  width: 100%;
+  margin-top: 16px;
 }
