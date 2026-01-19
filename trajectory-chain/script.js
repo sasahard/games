@@ -7,33 +7,19 @@ const ctx = canvas.getContext("2d");
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  createStars(); // リサイズ時に星を作り直す
 }
 window.addEventListener("resize", resize);
 resize();
 
 // ==========================
-// ゲーム定数（MVP最小）
+// ゲーム定数
 // ==========================
 const ASTEROID_COUNT = 10;
 const ASTEROID_RADIUS = 12;
 const MAX_SHOTS = 5;
 
-// 軌跡による力場（内部ロジックのみ）
 const FORCE_RADIUS = 140;
 const FORCE_POWER = 6;
-
-// ==========================
-// 状態管理
-// ==========================
-let asteroids = [];
-let shotsLeft = MAX_SHOTS;
-let trajectory = [];
-let drawing = false;
-let gameState = "playing"; // playing / clear / over
-
-const shotsEl = document.getElementById("shots");
-const messageEl = document.getElementById("message");
 
 // ==========================
 // 星空背景
@@ -47,11 +33,24 @@ function createStars() {
     stars.push({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      r: Math.random() * 1.5 + 0.3, // 星の大きさ
-      a: Math.random() * 0.5 + 0.3 // 明るさ
+      r: Math.random() * 1.2 + 0.3,
+      a: Math.random() * 0.8 + 0.2
     });
   }
 }
+createStars();
+
+// ==========================
+// 状態管理
+// ==========================
+let asteroids = [];
+let shotsLeft = MAX_SHOTS;
+let trajectory = [];
+let drawing = false;
+let gameState = "playing";
+
+const shotsEl = document.getElementById("shots");
+const messageEl = document.getElementById("message");
 
 // ==========================
 // 小惑星生成
@@ -68,21 +67,18 @@ function createAsteroids() {
     });
   }
 }
-createStars();
 createAsteroids();
 
 // ==========================
-// 入力：軌跡を描く（※可視化しない）
+// 入力
 // ==========================
-canvas.addEventListener("pointerdown", (e) => {
-  if (gameState !== "playing") return;
-  if (shotsLeft <= 0) return;
-
+canvas.addEventListener("pointerdown", e => {
+  if (gameState !== "playing" || shotsLeft <= 0) return;
   drawing = true;
   trajectory = [{ x: e.clientX, y: e.clientY }];
 });
 
-canvas.addEventListener("pointermove", (e) => {
+canvas.addEventListener("pointermove", e => {
   if (!drawing) return;
   trajectory.push({ x: e.clientX, y: e.clientY });
 });
@@ -90,14 +86,13 @@ canvas.addEventListener("pointermove", (e) => {
 canvas.addEventListener("pointerup", () => {
   if (!drawing) return;
   drawing = false;
-
   applyTrajectoryForce();
   trajectory = [];
   shotsLeft--;
 });
 
 // ==========================
-// 軌跡 → 力場を適用
+// 軌跡 → 力場
 // ==========================
 function applyTrajectoryForce() {
   if (trajectory.length < 2) return;
@@ -107,34 +102,31 @@ function applyTrajectoryForce() {
 
   const dx = end.x - start.x;
   const dy = end.y - start.y;
-  const length = Math.hypot(dx, dy);
-  if (length === 0) return;
+  const len = Math.hypot(dx, dy);
+  if (len === 0) return;
 
-  const nx = dx / length;
-  const ny = dy / length;
+  const nx = dx / len;
+  const ny = dy / len;
 
   asteroids.forEach(a => {
     if (!a.alive) return;
 
     let minDist = Infinity;
-
     trajectory.forEach(p => {
-      const ddx = a.x - p.x;
-      const ddy = a.y - p.y;
-      const d = Math.hypot(ddx, ddy);
+      const d = Math.hypot(a.x - p.x, a.y - p.y);
       if (d < minDist) minDist = d;
     });
 
     if (minDist < FORCE_RADIUS) {
-      const influence = (FORCE_RADIUS - minDist) / FORCE_RADIUS;
-      a.vx += nx * influence * FORCE_POWER;
-      a.vy += ny * influence * FORCE_POWER;
+      const f = (FORCE_RADIUS - minDist) / FORCE_RADIUS;
+      a.vx += nx * f * FORCE_POWER;
+      a.vy += ny * f * FORCE_POWER;
     }
   });
 }
 
 // ==========================
-// 更新処理
+// 更新
 // ==========================
 function update() {
   if (gameState !== "playing") return;
@@ -159,20 +151,15 @@ function update() {
       const b = asteroids[j];
       if (!a.alive || !b.alive) continue;
 
-      const dx = a.x - b.x;
-      const dy = a.y - b.y;
-      const dist = Math.hypot(dx, dy);
-
-      if (dist < ASTEROID_RADIUS * 2) {
+      if (Math.hypot(a.x - b.x, a.y - b.y) < ASTEROID_RADIUS * 2) {
         a.alive = false;
         b.alive = false;
       }
     }
   }
 
-  const aliveCount = asteroids.filter(a => a.alive).length;
-
-  if (aliveCount === 0) {
+  const alive = asteroids.filter(a => a.alive).length;
+  if (alive === 0) {
     gameState = "clear";
     messageEl.textContent = "CLEAR";
   } else if (shotsLeft <= 0) {
@@ -187,19 +174,21 @@ function update() {
 // 描画
 // ==========================
 function draw() {
-  // 背景（宇宙）
-  ctx.fillStyle = "#000";
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // 黒背景
+  ctx.fillStyle = "black";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // 星空
   stars.forEach(s => {
     ctx.beginPath();
     ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(255, 255, 255, ${s.a})`;
+    ctx.fillStyle = `rgba(255,255,255,${s.a})`;
     ctx.fill();
   });
 
-  // 小惑星
+  // 惑星
   asteroids.forEach(a => {
     if (!a.alive) return;
     ctx.beginPath();
@@ -210,7 +199,7 @@ function draw() {
 }
 
 // ==========================
-// メインループ
+// ループ
 // ==========================
 function loop() {
   update();
