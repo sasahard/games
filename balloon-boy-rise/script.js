@@ -35,21 +35,19 @@ class Obstacle {
 
     if (Math.random() < 0.5) {
       this.x = -this.width;
-      this.horizontalSpeed = 0.8 + Math.random() * 0.4; // ゆっくり横移動
+      this.horizontalSpeed = 0.8 + Math.random() * 0.4; // 横方向は一定速度
     } else {
       this.x = canvas.width;
       this.horizontalSpeed = -(0.8 + Math.random() * 0.4);
     }
 
-    this.verticalSpeed = baseScrollSpeed;
     this.color = 'black';
   }
 
   update(delta, scrollSpeed) {
-    // バルーン上昇に合わせて下に流れる
     const effectiveSpeed = tapHold ? scrollSpeed * 0.5 : scrollSpeed;
-    this.y += effectiveSpeed;
-    this.x += this.horizontalSpeed;
+    this.y += effectiveSpeed;  // 縦方向はスクロール追従
+    this.x += this.horizontalSpeed; // 横はまっすぐ
   }
 
   draw() {
