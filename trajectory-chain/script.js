@@ -14,48 +14,40 @@ resize();
 // ==========================
 // 背景：星雲 & 星
 // ==========================
-const STAR_COUNT = 560;
+const STAR_COUNT = 260;
 const stars = [];
 const nebulas = [];
 
-// 星生成（高輝度・低速）
+// 星生成
 for (let i = 0; i < STAR_COUNT; i++) {
-  const tempShift = Math.random() * 24 - 12;
+  const temp = Math.random() * 20 - 10; // 色温度微振れ
 
   stars.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
-
     r: Math.random() * 0.6 + 0.25,
-
-    baseAlpha: Math.random() * 0.35 + 0.75, // ← さらに明るく
-    glow: Math.random() * 9 + 10,           // ← 強いにじみ
-
-    vx: -(Math.random() * 0.05 + 0.02),     // ← ゆっくり
-    vy: -(Math.random() * 0.05 + 0.02),
-
+    alpha: Math.random() * 0.5 + 0.6,
+    glow: Math.random() * 10 + 10,
+    speed: Math.random() * 0.04 + 0.015, // ゆっくり
     phase: Math.random() * Math.PI * 2,
-    twinkleSpeed: Math.random() * 0.018 + 0.008,
-
     color: {
-      r: 245 + tempShift,
+      r: 245 + temp,
       g: 245,
-      b: 255 - tempShift
+      b: 255 - temp
     }
   });
 }
 
-// 星雲生成（修正元維持）
+// 星雲生成（奥・暗め）
 for (let i = 0; i < 5; i++) {
-  const size = Math.random() * 600 + 500;
   nebulas.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
-    r: size,
-    color: Math.random() > 0.5 ? "140,170,255" : "180,130,255",
-    alpha: Math.random() * 0.015 + 0.012,
-    vx: (Math.random() - 0.5) * 0.025,
-    vy: (Math.random() - 0.5) * 0.025
+    r: Math.random() * 600 + 500,
+    color: Math.random() > 0.5 ? "120,160,255" : "180,120,255",
+    alpha: Math.random() * 0.02 + 0.015,
+    vx: (Math.random() - 0.5) * 0.02,
+    vy: (Math.random() - 0.5) * 0.02
   });
 }
 
@@ -76,7 +68,7 @@ let asteroids = [];
 let shotsLeft = MAX_SHOTS;
 let trajectory = [];
 let drawing = false;
-let gameState = "ready";
+let gameState = "ready"; // ready / playing
 
 const shotsEl = document.getElementById("shots");
 const messageEl = document.getElementById("message");
@@ -150,8 +142,8 @@ function applyTrajectoryForce() {
 
   asteroids.forEach(a => {
     if (!a.alive) return;
-    let min = Infinity;
 
+    let min = Infinity;
     trajectory.forEach(p => {
       const d = Math.hypot(a.x - p.x, a.y - p.y);
       if (d < min) min = d;
@@ -169,14 +161,17 @@ function applyTrajectoryForce() {
 // 更新
 // ==========================
 function update() {
+  // 星（右下 → 左上）
   stars.forEach(s => {
-    s.x += s.vx;
-    s.y += s.vy;
+    s.x -= s.speed;
+    s.y -= s.speed * 0.6;
+    s.phase += 0.02;
+
     if (s.x < 0) s.x = canvas.width;
     if (s.y < 0) s.y = canvas.height;
-    s.phase += s.twinkleSpeed;
   });
 
+  // 星雲
   nebulas.forEach(n => {
     n.x += n.vx;
     n.y += n.vy;
@@ -188,6 +183,7 @@ function update() {
     if (!a.alive) return;
     a.x += a.vx;
     a.y += a.vy;
+
     if (a.x < ASTEROID_RADIUS || a.x > canvas.width - ASTEROID_RADIUS) a.vx *= -1;
     if (a.y < ASTEROID_RADIUS || a.y > canvas.height - ASTEROID_RADIUS) a.vy *= -1;
   });
@@ -220,11 +216,11 @@ function draw() {
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // 星雲
+  // 星雲（奥）
   nebulas.forEach(n => {
     const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
     g.addColorStop(0, `rgba(${n.color}, ${n.alpha})`);
-    g.addColorStop(0.6, `rgba(${n.color}, ${n.alpha * 0.25})`);
+    g.addColorStop(0.6, `rgba(${n.color}, ${n.alpha * 0.3})`);
     g.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = g;
     ctx.beginPath();
@@ -232,18 +228,29 @@ function draw() {
     ctx.fill();
   });
 
-  // 星（超高輝度・ゆっくり）
+  // 星（加算合成）
+  ctx.globalCompositeOperation = "lighter";
+
   stars.forEach(s => {
-    const twinkle = Math.sin(s.phase) * 0.5 + 0.85; // 暗くならない
+    const twinkle = Math.sin(s.phase) * 0.25 + 0.95;
 
+    // 外側グロー
     ctx.shadowBlur = s.glow;
-    ctx.shadowColor = `rgb(${s.color.r},${s.color.g},${s.color.b})`;
-    ctx.fillStyle = `rgba(${s.color.r},${s.color.g},${s.color.b},${s.baseAlpha * twinkle})`;
-
+    ctx.shadowColor = `rgba(${s.color.r},${s.color.g},${s.color.b},${s.alpha})`;
+    ctx.fillStyle = `rgba(${s.color.r},${s.color.g},${s.color.b},${s.alpha * twinkle})`;
     ctx.beginPath();
     ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
     ctx.fill();
+
+    // 芯（影なし・軽い）
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = `rgba(255,255,255,${s.alpha})`;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r * 0.6, 0, Math.PI * 2);
+    ctx.fill();
   });
+
+  ctx.globalCompositeOperation = "source-over";
   ctx.shadowBlur = 0;
 
   // 惑星
