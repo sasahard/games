@@ -10,7 +10,7 @@ body, html {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  font-family: 'Rounded Mplus 1c', sans-serif; /* 優しい丸フォント */
+  font-family: 'Rounded Mplus 1c', sans-serif;
   background: #87ceeb;
 }
 
