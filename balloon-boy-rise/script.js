@@ -1,17 +1,20 @@
-// ゲーム基本設定
+// キャンバス初期設定
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
 let gameOver = false;
 let score = 0;
-let speed = 2;
+let scrollSpeed = 2;
 let tapHold = false;
 let obstacles = [];
+let animationId = null; // ループIDを保持
 
-// 少年キャラクター
+// 少年キャラクター（画面中央固定）
 const boy = {
-  x: window.innerWidth / 2,
-  y: window.innerHeight - 100,
+  x: canvas.width / 2,
+  y: canvas.height / 2,
   radius: 20,
   color: 'red'
 };
@@ -21,15 +24,14 @@ class Obstacle {
   constructor() {
     this.width = 40;
     this.height = 40;
-    this.x = Math.random() < 0.5 ? -50 : canvas.width + 50;
-    this.y = Math.random() * (canvas.height - 100);
-    this.speed = 3 + Math.random() * 2;
-    this.direction = this.x < 0 ? 1 : -1;
+    this.x = Math.random() * (canvas.width - 40);
+    this.y = -50; // 上から出現
+    this.speed = 2 + Math.random() * 2;
     this.color = 'black';
   }
 
   update() {
-    this.x += this.speed * this.direction;
+    this.y += this.speed + (tapHold ? scrollSpeed * 0.3 : scrollSpeed);
   }
 
   draw() {
@@ -60,47 +62,37 @@ function gameLoop() {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // 上昇速度調整
-  const currentSpeed = tapHold ? speed * 0.3 : speed;
-  boy.y -= currentSpeed;
+  const currentSpeed = tapHold ? scrollSpeed * 0.3 : scrollSpeed;
   score += currentSpeed;
-
-  // スコア表示
   document.getElementById('score').innerText = Math.floor(score) + ' m';
 
   // 障害物生成
-  if (Math.random() < 0.02) {
-    obstacles.push(new Obstacle());
-  }
+  if (Math.random() < 0.02) obstacles.push(new Obstacle());
 
-  // 障害物更新・描画
   obstacles.forEach((obs, index) => {
     obs.update();
     obs.draw();
 
-    if (checkCollision(obs)) {
-      endGame();
-    }
+    if (checkCollision(obs)) endGame();
 
-    if (obs.x < -100 || obs.x > canvas.width + 100) {
-      obstacles.splice(index, 1);
-    }
+    if (obs.y > canvas.height + 50) obstacles.splice(index, 1);
   });
 
-  // 少年描画
+  // 少年描画（画面中央固定）
   ctx.beginPath();
   ctx.arc(boy.x, boy.y, boy.radius, 0, Math.PI * 2);
   ctx.fillStyle = boy.color;
   ctx.fill();
   ctx.closePath();
 
-  requestAnimationFrame(gameLoop);
+  animationId = requestAnimationFrame(gameLoop);
 }
 
 // ゲームオーバー
 function endGame() {
   gameOver = true;
   document.getElementById('game-over').classList.remove('hidden');
+  if (animationId) cancelAnimationFrame(animationId);
 }
 
 // リトライ
@@ -115,31 +107,31 @@ canvas.addEventListener('mouseup', () => tapHold = false);
 canvas.addEventListener('touchstart', () => tapHold = true);
 canvas.addEventListener('touchend', () => tapHold = false);
 
-// ゲーム開始ボタン
+// スタート画面
 const startScreen = document.getElementById('start-screen');
 startScreen.addEventListener('click', () => {
   resetGame();
   startGame();
 });
 
-// 初期化
+// 初期化（リロード時は何もしない）
 function resetGame() {
   gameOver = false;
   obstacles = [];
-  boy.y = canvas.height - 100;
   score = 0;
-  document.getElementById('game-over').classList.add('hidden');
   startScreen.classList.add('hidden');
+  document.getElementById('game-over').classList.add('hidden');
 }
 
 // ゲーム開始
 function startGame() {
-  gameLoop();
+  animationId = requestAnimationFrame(gameLoop);
 }
 
-// ウィンドウリサイズ対応
+// リサイズ対応
 window.addEventListener('resize', () => {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   boy.x = canvas.width / 2;
+  boy.y = canvas.height / 2;
 });
