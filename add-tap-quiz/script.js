@@ -1,105 +1,105 @@
-const soundCorrect = document.getElementById("sound-correct");
-const soundWrong = document.getElementById("sound-wrong");
-
-const selectScreen = document.getElementById("select-screen");
-const gameScreen = document.getElementById("game-screen");
-const resultScreen = document.getElementById("result-screen");
-
-const answerButtons = document.getElementById("answer-buttons");
-
 const questionEl = document.getElementById("question");
-const timerEl = document.getElementById("timer");
-const resultTimeEl = document.getElementById("result-time");
-const retryBtn = document.getElementById("retry");
+const statusEl = document.getElementById("status");
+const buttonsEl = document.getElementById("buttons");
+const resultArea = document.getElementById("result-area");
+const timeText = document.getElementById("time-text");
+const retryBtn = document.getElementById("retry-btn");
 
-let dan = 0;
-let remaining = [];
-let startTime = 0;
-let timerId = null;
+let baseNumber = null;
+let problems = [];
+let currentIndex = 0;
+let startTime = null;
 
-/* 初期：段選択 */
-showDanSelect();
+// 初期表示：段選択
+showStageSelect();
 
-function showDanSelect() {
-  answerButtons.innerHTML = "";
+function showStageSelect() {
+  statusEl.textContent = "どのだんにする？";
+  questionEl.textContent = "";
+  resultArea.classList.add("hidden");
+  buttonsEl.innerHTML = "";
+
   for (let i = 0; i <= 9; i++) {
-    const btn = document.createElement("button");
-    btn.textContent = i;
-    btn.onclick = () => startGame(i);
-    answerButtons.appendChild(btn);
+    const btn = createButton(i, () => startGame(i));
+    buttonsEl.appendChild(btn);
   }
 }
 
-function startGame(selectedDan) {
-  dan = selectedDan;
-  remaining = [...Array(10).keys()];
+function startGame(stage) {
+  baseNumber = stage;
+  problems = [];
 
-  selectScreen.classList.add("hidden");
-  gameScreen.classList.remove("hidden");
+  for (let i = 0; i <= 9; i++) {
+    problems.push({
+      text: `${baseNumber} + ${i}`,
+      answer: baseNumber + i
+    });
+  }
 
-  createAnswerButtons();
-
+  shuffle(problems);
+  currentIndex = 0;
   startTime = Date.now();
-  timerId = setInterval(updateTimer, 100);
 
-  nextQuestion();
+  setupAnswerButtons();
+  showQuestion();
 }
 
-function updateTimer() {
-  timerEl.textContent =
-    ((Date.now() - startTime) / 1000).toFixed(1) + " 秒";
-}
+function setupAnswerButtons() {
+  buttonsEl.innerHTML = "";
 
-function nextQuestion() {
-  if (remaining.length === 0) {
-    finishGame();
-    return;
-  }
+  const answers = problems.map(p => p.answer);
+  shuffle(answers);
 
-  const value = remaining[Math.floor(Math.random() * remaining.length)];
-  questionEl.textContent = `${dan} + ${value} = ?`;
-  questionEl.dataset.answer = dan + value;
-}
-
-function createAnswerButtons() {
-  answerButtons.innerHTML = "";
-
-  const nums = [];
-  for (let i = dan; i <= dan + 9; i++) nums.push(i);
-  nums.sort(() => Math.random() - 0.5);
-
-  nums.forEach(num => {
-    const btn = document.createElement("button");
-    btn.textContent = num;
-    btn.onclick = () => checkAnswer(btn, num);
-    answerButtons.appendChild(btn);
+  answers.forEach(num => {
+    const btn = createButton(num, () => handleAnswer(num, btn));
+    buttonsEl.appendChild(btn);
   });
 }
 
-function checkAnswer(button, selected) {
-  const correct = Number(questionEl.dataset.answer);
+function showQuestion() {
+  statusEl.textContent = `のこり ${problems.length - currentIndex} もん`;
+  questionEl.textContent = problems[currentIndex].text;
+}
 
-  if (selected === correct) {
-    soundCorrect.play().catch(() => {});
-    button.classList.add("correct");
-    button.disabled = true;
+function handleAnswer(value, btn) {
+  const correct = problems[currentIndex].answer;
 
-    remaining = remaining.filter(v => v !== correct - dan);
-    setTimeout(nextQuestion, 150);
+  if (value === correct) {
+    btn.classList.add("correct", "disabled");
+    currentIndex++;
+
+    if (currentIndex >= problems.length) {
+      finishGame();
+    } else {
+      showQuestion();
+    }
   } else {
-    soundWrong.play().catch(() => {});
-    button.classList.add("wrong");
-    setTimeout(() => button.classList.remove("wrong"), 250);
+    btn.classList.add("wrong");
+    setTimeout(() => btn.classList.remove("wrong"), 400);
   }
 }
 
 function finishGame() {
-  clearInterval(timerId);
-  gameScreen.classList.add("hidden");
-  resultScreen.classList.remove("hidden");
-
-  resultTimeEl.textContent =
-    `タイム：${((Date.now() - startTime) / 1000).toFixed(1)} 秒`;
+  const time = ((Date.now() - startTime) / 1000).toFixed(1);
+  resultArea.classList.remove("hidden");
+  timeText.textContent = `タイム：${time} 秒`;
+  questionEl.textContent = "";
+  statusEl.textContent = "";
 }
 
-retryBtn.onclick = () => location.reload();
+retryBtn.addEventListener("click", showStageSelect);
+
+function createButton(text, onClick) {
+  const btn = document.createElement("button");
+  btn.className = "answer-btn";
+  btn.textContent = text;
+  btn.addEventListener("click", onClick);
+  return btn;
+}
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
