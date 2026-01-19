@@ -287,14 +287,19 @@ function draw() {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
-    // 光グロー
-    for (let i = 5; i > 0; i--) {
-      ctx.shadowBlur = i * 12;
-      ctx.shadowColor = `rgba(150,200,255,${0.05 * i})`;
+    // ライトセーバー風グロー
+    const glowLayers = 6;
+    for (let i = glowLayers; i > 0; i--) {
+      ctx.shadowBlur = i * 20; // グロー広がり
+      ctx.shadowColor = `rgba(100,200,255,${0.03 * i})`; // 青白い光
       ctx.fillStyle = "white";
       ctx.fillText(text, viewWidth / 2, viewHeight / 2 - 20);
     }
+
+    // 中心は通常の白
     ctx.shadowBlur = 0;
+    ctx.fillStyle = "white";
+    ctx.fillText(text, viewWidth / 2, viewHeight / 2 - 20);
   }
 }
 
