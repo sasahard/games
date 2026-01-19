@@ -75,6 +75,7 @@ let trajectory = [];
 let drawing = false;
 let waitingNext = false;
 let gameState = "ready";
+let showTitle = true; // タイトル表示フラグ
 
 const shotsEl = document.getElementById("shots");
 const messageEl = document.getElementById("message");
@@ -106,6 +107,7 @@ startBtn.addEventListener("click", () => {
   gameState = "playing";
   messageEl.textContent = "";
   startBtn.style.display = "none";
+  showTitle = false; // タイトル非表示
 });
 
 // ==========================
@@ -216,7 +218,6 @@ function update() {
 // 描画
 // ==========================
 function draw() {
-  // 背景
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, viewWidth, viewHeight);
 
@@ -244,11 +245,14 @@ function draw() {
   });
   ctx.shadowBlur = 0;
 
-  // タイトル
-  ctx.font = `${Math.floor(viewWidth / 12)}px 'Orbitron', sans-serif`;
-  ctx.fillStyle = "white";
-  ctx.textAlign = "center";
-  ctx.fillText("Trajectory Chain", viewWidth / 2, viewHeight * 0.15);
+  // タイトル（光る）
+  if (showTitle) {
+    const glow = Math.sin(Date.now() * 0.002) * 0.5 + 1.2;
+    ctx.font = `${Math.floor(viewWidth / 12)}px 'Orbitron', sans-serif`;
+    ctx.fillStyle = `rgba(255,255,255,${glow})`;
+    ctx.textAlign = "center";
+    ctx.fillText("Trajectory Chain", viewWidth / 2, viewHeight * 0.15);
+  }
 
   // 惑星
   asteroids.forEach(a => {
