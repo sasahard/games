@@ -7,9 +7,10 @@ const ctx = canvas.getContext("2d");
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
+  bgCanvas.width = canvas.width;
+  bgCanvas.height = canvas.height;
 }
 window.addEventListener("resize", resize);
-resize();
 
 // ==========================
 // 背景星雲レイヤー（オフスクリーン）
@@ -22,7 +23,6 @@ bgCanvas.height = canvas.height;
 const NEBULA_COUNT = 1;
 const nebulas = [];
 
-// 星雲生成
 for (let i = 0; i < NEBULA_COUNT; i++) {
   const r = Math.random() * 600 + 500;
   nebulas.push({
@@ -36,7 +36,7 @@ for (let i = 0; i < NEBULA_COUNT; i++) {
   });
 }
 
-// 背景描画（星雲だけ）
+// 星雲描画（オフスクリーン）
 function buildBackground() {
   bgCtx.fillStyle = "#000";
   bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
@@ -63,14 +63,13 @@ for (let i = 0; i < STAR_COUNT; i++) {
   stars.push({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
-    r: Math.random() * 1 + 0.3,
-    alpha: Math.random() * 0.5 + 0.5,
+    r: Math.random() * 0.6 + 0.2, // 少し小さく
+    alpha: Math.random() * 0.6 + 0.6, // 輝度強め
     glow: Math.random() * 6 + 2,
-    vx: -0.02 - Math.random() * 0.08,
-    vy: -0.01 - Math.random() * 0.04,
+    vx: -0.02 - Math.random() * 0.05,
+    vy: -0.01 - Math.random() * 0.02,
     phase: Math.random() * Math.PI * 2,
-    twinkleSpeed: Math.random() * 0.02 + 0.005,
-    colorOffset: Math.random() * 20 - 10 // 色温度の微調整
+    twinkleSpeed: Math.random() * 0.02 + 0.005
   });
 }
 
@@ -90,7 +89,8 @@ let asteroids = [];
 let shotsLeft = MAX_SHOTS;
 let trajectory = [];
 let drawing = false;
-let gameState = "ready"; // ready / playing
+let waitingNext = false;
+let gameState = "ready";
 
 const shotsEl = document.getElementById("shots");
 const messageEl = document.getElementById("message");
@@ -111,6 +111,7 @@ function createAsteroids() {
     });
   }
   shotsLeft = MAX_SHOTS;
+  waitingNext = false;
 }
 
 // ==========================
@@ -164,12 +165,10 @@ function applyTrajectoryForce() {
   asteroids.forEach(a => {
     if (!a.alive) return;
     let minDist = Infinity;
-
     trajectory.forEach(p => {
       const d = Math.hypot(a.x - p.x, a.y - p.y);
       if (d < minDist) minDist = d;
     });
-
     if (minDist < FORCE_RADIUS) {
       const influence = (FORCE_RADIUS - minDist) / FORCE_RADIUS;
       a.vx += nx * influence * FORCE_POWER;
@@ -182,7 +181,7 @@ function applyTrajectoryForce() {
 // 更新処理
 // ==========================
 function update() {
-  // 星雲移動（負荷軽減のため少しだけ動かす）
+  // 背景星雲移動
   nebulas.forEach(n => {
     n.x += n.vx;
     n.y += n.vy;
@@ -209,7 +208,7 @@ function update() {
     if (a.y < ASTEROID_RADIUS || a.y > canvas.height - ASTEROID_RADIUS) a.vy *= -1;
   });
 
-  // 惑星同士の衝突
+  // 惑星衝突判定
   for (let i = 0; i < asteroids.length; i++) {
     for (let j = i + 1; j < asteroids.length; j++) {
       const a = asteroids[i];
@@ -222,11 +221,10 @@ function update() {
     }
   }
 
-  // クリア判定
-  if (asteroids.filter(a => a.alive).length === 0 && gameState === "playing") {
-    gameState = "ready";
-    messageEl.textContent = "CLEAR";
-    startBtn.style.display = "block";
+  // 全破壊後、自動再生成
+  if (asteroids.filter(a => a.alive).length === 0 && gameState === "playing" && !waitingNext) {
+    waitingNext = true;
+    setTimeout(createAsteroids, 700);
   }
 
   shotsEl.textContent = `shots: ${shotsLeft}`;
@@ -236,10 +234,10 @@ function update() {
 // 描画
 // ==========================
 function draw() {
-  // 星雲（オフスクリーン描画をコピー）
+  // 背景星雲（オフスクリーンコピー）
   ctx.drawImage(bgCanvas, 0, 0);
 
-  // 背景星（前面）
+  // 背景星
   stars.forEach(s => {
     const twinkle = Math.sin(s.phase) * 0.3 + 0.7;
     ctx.shadowBlur = s.glow;
