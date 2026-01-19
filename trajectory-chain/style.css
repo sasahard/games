@@ -15,16 +15,16 @@ html, body {
   color: white;
 }
 
+/* ★ CanvasはCSSでサイズ指定しない ★ */
 #gameCanvas {
+  display: block;
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  display: block;
   touch-action: none;
 }
 
+/* UIは別レイヤー */
 #ui {
   position: fixed;
   inset: 0;
