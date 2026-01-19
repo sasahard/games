@@ -67,6 +67,11 @@ function handleAnswer(value, btn) {
   const correct = problems[currentIndex].answer;
 
   if (value === correct) {
+
+    // 正解音
+    const correctSound = new Audio("sounds/correct.mp3");
+    correctSound.play().catch(e => console.log("音を再生できません", e));
+
     btn.classList.add("correct", "disabled");
     showFeedback(true);
     currentIndex++;
@@ -75,7 +80,13 @@ function handleAnswer(value, btn) {
     } else {
       setTimeout(showQuestion, 600);
     }
+
   } else {
+
+    // 不正解音
+    const wrongSound = new Audio("sounds/wrong.mp3");
+    wrongSound.play().catch(e => console.log("音を再生できません", e));
+
     btn.classList.add("wrong");
     showFeedback(false);
     setTimeout(() => btn.classList.remove("wrong"), 400);
