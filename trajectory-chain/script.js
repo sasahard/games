@@ -32,6 +32,7 @@ const FORCE_RADIUS = 140;
 const FORCE_POWER = 6;
 const TIME_LIMIT = 60;
 const ASTEROID_IMAGE_COUNT = 5;
+const PARTICLE_COUNT = 12; // 衝突粒子の数
 
 // ==========================
 // 効果音
@@ -43,7 +44,7 @@ const sounds = {
 };
 
 // ==========================
-// 背景
+// 背景星雲
 // ==========================
 const NEBULA_COUNT = 4;
 const nebulas = [];
@@ -64,6 +65,9 @@ function createNebulas() {
 }
 createNebulas();
 
+// ==========================
+// 背景星
+// ==========================
 const STAR_COUNT = 450;
 const stars = [];
 function createStars() {
@@ -91,12 +95,13 @@ let shotsLeft = MAX_SHOTS;
 let trajectory = [];
 let drawing = false;
 let waitingNext = false;
-let gameState = "title";
+let gameState = "title"; // title / playing
 let score = 0;
 let currentShotCollisions = 0;
 let highScore = 0;
 let timeLeft = TIME_LIMIT;
 let timerActive = false;
+let particles = []; // 衝突粒子
 
 const shotsEl = document.getElementById("shots");
 const messageEl = document.getElementById("message");
@@ -119,7 +124,6 @@ for (let i = 1; i <= ASTEROID_IMAGE_COUNT; i++) {
   };
   asteroidImages.push(img);
 }
-startBtn.disabled = true;
 
 // ==========================
 // 小惑星生成
@@ -131,6 +135,7 @@ function createAsteroids() {
   currentShotCollisions = 0;
   timeLeft = TIME_LIMIT;
   timerActive = true;
+  particles = [];
 
   while (asteroids.length < ASTEROID_COUNT) {
     const x = Math.random() * (viewWidth - 100) + 50;
@@ -140,10 +145,11 @@ function createAsteroids() {
 
     const img = asteroidImages[Math.floor(Math.random() * ASTEROID_IMAGE_COUNT)];
     asteroids.push({
-      x, y,
-      vx: 0, vy: 0,
+      x,
+      y,
+      vx: 0,
+      vy: 0,
       alive: true,
-      explode: 0, // 破壊演出用
       img,
       radius: ASTEROID_RADIUS * ASTEROID_SCALE,
       angle: Math.random() * Math.PI * 2,
@@ -158,13 +164,15 @@ function createAsteroids() {
 canvas.addEventListener("pointerdown", e => {
   if (gameState !== "playing" || shotsLeft <= 0) return;
   drawing = true;
-  trajectory = [{x:e.clientX, y:e.clientY}];
+  trajectory = [{ x: e.clientX, y: e.clientY }];
   currentShotCollisions = 0;
 });
+
 canvas.addEventListener("pointermove", e => {
   if (!drawing) return;
-  trajectory.push({x:e.clientX, y:e.clientY});
+  trajectory.push({ x: e.clientX, y: e.clientY });
 });
+
 canvas.addEventListener("pointerup", () => {
   if (!drawing) return;
   drawing = false;
@@ -174,18 +182,18 @@ canvas.addEventListener("pointerup", () => {
 });
 
 // ==========================
-// 力場適用
+// 軌跡 → 力場
 // ==========================
 function applyTrajectoryForce() {
   if (trajectory.length < 2) return;
   const s = trajectory[0];
-  const e = trajectory[trajectory.length-1];
+  const e = trajectory[trajectory.length - 1];
   const dx = e.x - s.x;
   const dy = e.y - s.y;
   const len = Math.hypot(dx, dy);
   if (len === 0) return;
-  const nx = dx/len;
-  const ny = dy/len;
+  const nx = dx / len;
+  const ny = dy / len;
 
   asteroids.forEach(a => {
     if (!a.alive) return;
@@ -195,9 +203,9 @@ function applyTrajectoryForce() {
       if (d < min) min = d;
     });
     if (min < FORCE_RADIUS) {
-      const f = (FORCE_RADIUS - min)/FORCE_RADIUS;
-      a.vx += nx*f*FORCE_POWER;
-      a.vy += ny*f*FORCE_POWER;
+      const f = (FORCE_RADIUS - min) / FORCE_RADIUS;
+      a.vx += nx * f * FORCE_POWER;
+      a.vy += ny * f * FORCE_POWER;
     }
   });
 }
@@ -207,169 +215,259 @@ function applyTrajectoryForce() {
 // ==========================
 function update() {
   // 星雲
-  nebulas.forEach(n=>{
-    n.x+=n.vx; n.y+=n.vy;
-    if(n.x<-n.r) n.x=viewWidth+n.r;
-    if(n.x>viewWidth+n.r) n.x=-n.r;
-    if(n.y<-n.r) n.y=viewHeight+n.r;
-    if(n.y>viewHeight+n.r) n.y=-n.r;
+  nebulas.forEach(n => {
+    n.x += n.vx;
+    n.y += n.vy;
+    if (n.x < -n.r) n.x = viewWidth + n.r;
+    if (n.x > viewWidth + n.r) n.x = -n.r;
+    if (n.y < -n.r) n.y = viewHeight + n.r;
+    if (n.y > viewHeight + n.r) n.y = -n.r;
   });
 
   // 星
-  stars.forEach(s=>{
-    s.x-=s.speed; s.y-=s.speed; if(s.x<0)s.x=viewWidth; if(s.y<0)s.y=viewHeight;
-    s.twinklePhase+=0.02;
+  stars.forEach(s => {
+    s.x -= s.speed;
+    s.y -= s.speed;
+    if (s.x < 0) s.x = viewWidth;
+    if (s.y < 0) s.y = viewHeight;
+    s.twinklePhase += 0.02;
   });
 
-  if(gameState!=="playing") return;
+  if (gameState !== "playing") return;
 
   // タイマー
-  if(timerActive){
-    timeLeft-=1/60;
-    if(timeLeft<=0){
-      timeLeft=0;
-      timerActive=false;
-      messageEl.textContent="GAME OVER";
-      sounds.gameover.currentTime=0; sounds.gameover.play();
-      asteroids.forEach(a=>a.alive=false);
-      setTimeout(()=>{
-        gameState="title";
-        messageEl.textContent="";
-        if(score>highScore)highScore=score;
-        score=0;
-        startBtn.style.display="inline-block";
-        infoBtn.style.display="inline-block";
-      },1000);
+  if (timerActive) {
+    timeLeft -= 1/60;
+    if (timeLeft <= 0) {
+      timeLeft = 0;
+      timerActive = false;
+      messageEl.textContent = "GAME OVER";
+      sounds.gameover.currentTime = 0;
+      sounds.gameover.play();
+
+      asteroids.forEach(a => a.alive = false);
+      createParticlesFromAllAsteroids();
+
+      setTimeout(() => {
+        gameState = "title";
+        messageEl.textContent = "";
+        if (score > highScore) highScore = score;
+        score = 0;
+        startBtn.style.display = "inline-block";
+        infoBtn.style.display = "inline-block";
+      }, 1000);
     }
   }
 
-  // 惑星移動＆回転
-  asteroids.forEach(a=>{
-    if(a.alive || a.explode>0){
-      if(a.alive){
-        a.x+=a.vx; a.y+=a.vy; a.angle+=a.rotationSpeed;
-        if(a.x<a.radius||a.x>viewWidth-a.radius)a.vx*=-1;
-        if(a.y<a.radius||a.y>viewHeight-a.radius)a.vy*=-1;
-      }else{
-        a.explode-=0.05;
-      }
-    }
+  // 惑星移動 & 回転
+  asteroids.forEach(a => {
+    if (!a.alive) return;
+    a.x += a.vx;
+    a.y += a.vy;
+    a.angle += a.rotationSpeed;
+
+    if (a.x < a.radius || a.x > viewWidth - a.radius) a.vx *= -1;
+    if (a.y < a.radius || a.y > viewHeight - a.radius) a.vy *= -1;
   });
 
-  // 衝突判定
-  for(let i=0;i<asteroids.length;i++){
-    for(let j=i+1;j<asteroids.length;j++){
-      const a=asteroids[i];
-      const b=asteroids[j];
-      if(!a.alive || !b.alive) continue;
-      if(Math.hypot(a.x-b.x,a.y-b.y)<a.radius+b.radius){
-        a.alive=false; b.alive=false; a.explode=1; b.explode=1;
-        sounds.collision.currentTime=0; sounds.collision.play();
+  // 惑星衝突
+  for (let i = 0; i < asteroids.length; i++) {
+    for (let j = i + 1; j < asteroids.length; j++) {
+      const a = asteroids[i];
+      const b = asteroids[j];
+      if (!a.alive || !b.alive) continue;
+      if (Math.hypot(a.x - b.x, a.y - b.y) < a.radius + b.radius) {
+        a.alive = false;
+        b.alive = false;
+
+        sounds.collision.currentTime = 0;
+        sounds.collision.play();
+
+        createParticlesFromAsteroid(a);
+        createParticlesFromAsteroid(b);
+
         currentShotCollisions++;
-        const bonus=Math.pow(1.5,currentShotCollisions-1);
-        score+=Math.round(10*bonus);
+        const bonusMultiplier = Math.pow(1.5, currentShotCollisions - 1);
+        score += Math.round(10 * bonusMultiplier);
       }
     }
   }
 
-  // 全消しで次ステージ
-  if(asteroids.every(a=>!a.alive && a.explode<=0) && !waitingNext){
-    waitingNext=true;
-    setTimeout(()=>{
-      sounds.stageclear.currentTime=0; sounds.stageclear.play();
+  // 粒子更新
+  particles.forEach((p, idx) => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.alpha -= 0.02;
+    if (p.alpha <= 0) particles.splice(idx, 1);
+  });
+
+  // 全消しで自動再描画
+  if (asteroids.every(a => !a.alive) && !waitingNext) {
+    waitingNext = true;
+    setTimeout(() => {
+      sounds.stageclear.currentTime = 0;
+      sounds.stageclear.play();
+
       createAsteroids();
-      waitingNext=false;
-      timeLeft=TIME_LIMIT;
-    },10);
+      waitingNext = false;
+      timeLeft = TIME_LIMIT;
+    }, 10);
   }
+}
+
+// ==========================
+// 粒子生成関数
+// ==========================
+function createParticlesFromAsteroid(a) {
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 3 + 1;
+    particles.push({
+      x: a.x,
+      y: a.y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      alpha: 1,
+      radius: Math.random() * 4 + 2,
+      color: `rgba(255,${Math.floor(Math.random()*200+55)},0,1)`
+    });
+  }
+}
+
+function createParticlesFromAllAsteroids() {
+  asteroids.forEach(a => {
+    if (a.alive) createParticlesFromAsteroid(a);
+  });
 }
 
 // ==========================
 // 描画
 // ==========================
-function draw(){
-  ctx.fillStyle="black";
-  ctx.fillRect(0,0,viewWidth,viewHeight);
+function draw() {
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, viewWidth, viewHeight);
 
   // 星雲
-  nebulas.forEach(n=>{
-    const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);
-    g.addColorStop(0,`rgba(${n.color},${n.alpha*1.8})`);
-    g.addColorStop(0.5,`rgba(${n.color},${n.alpha*0.6})`);
-    g.addColorStop(1,"rgba(0,0,0,0)");
-    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fill();
+  nebulas.forEach(n => {
+    const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
+    g.addColorStop(0, `rgba(${n.color}, ${n.alpha * 1.8})`);
+    g.addColorStop(0.5, `rgba(${n.color}, ${n.alpha * 0.6})`);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+    ctx.fill();
   });
 
   // 星
-  stars.forEach(s=>{
-    const colorR=255, colorG=255-s.colorOffset, colorB=255-s.colorOffset;
-    const twinkle=Math.sin(s.twinklePhase)*0.4+0.6;
-    ctx.shadowBlur=s.glow; ctx.shadowColor=`rgba(255,255,255,${s.alpha*twinkle})`;
-    ctx.fillStyle=`rgba(${colorR},${colorG},${colorB},${s.alpha*twinkle})`;
-    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
+  stars.forEach(s => {
+    const colorR = 255;
+    const colorG = 255 - s.colorOffset;
+    const colorB = 255 - s.colorOffset;
+    const twinkle = Math.sin(s.twinklePhase) * 0.4 + 0.6;
+    ctx.shadowBlur = s.glow;
+    ctx.shadowColor = `rgba(255,255,255,${s.alpha * twinkle})`;
+    ctx.fillStyle = `rgba(${colorR},${colorG},${colorB},${s.alpha * twinkle})`;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fill();
   });
-  ctx.shadowBlur=0;
+  ctx.shadowBlur = 0;
 
-  // 惑星
-  asteroids.forEach(a=>{
-    if(!a.alive && a.explode<=0) return;
-    ctx.save(); ctx.translate(a.x,a.y); ctx.rotate(a.angle);
-    const size=a.radius*2*(a.alive?1:a.explode);
-    if(a.img.complete) ctx.drawImage(a.img,-size/2,-size/2,size,size);
+  // 惑星描画
+  asteroids.forEach(a => {
+    if (!a.alive || !a.img.complete) return;
+    ctx.save();
+    ctx.translate(a.x, a.y);
+    ctx.rotate(a.angle);
+    ctx.drawImage(a.img, -a.radius, -a.radius, a.radius * 2, a.radius * 2);
     ctx.restore();
   });
 
+  // 粒子描画
+  particles.forEach(p => {
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2);
+    ctx.fill();
+  });
+
   // タイトル
-  if(gameState==="title"){
-    const text="Trajectory Chain"; let fontSize=56;
-    ctx.font=`bold ${fontSize}px 'Orbitron', sans-serif`;
-    let textWidth=ctx.measureText(text).width;
-    const maxWidth=viewWidth*0.9;
-    if(textWidth>maxWidth){fontSize=fontSize*maxWidth/textWidth; ctx.font=`bold ${fontSize}px 'Orbitron', sans-serif`;}
-    ctx.textAlign="center"; ctx.textBaseline="middle";
-    for(let i=5;i>0;i--){
-      ctx.shadowBlur=i*12; ctx.shadowColor=`rgba(150,200,255,${0.05*i})`; ctx.fillStyle="white";
-      ctx.fillText(text,viewWidth/2,viewHeight/2-20);
+  if (gameState === "title") {
+    const text = "Trajectory Chain";
+    let fontSize = 56;
+    ctx.font = `bold ${fontSize}px 'Orbitron', sans-serif`;
+    let textWidth = ctx.measureText(text).width;
+    const maxWidth = viewWidth * 0.9;
+    if (textWidth > maxWidth) {
+      fontSize = fontSize * maxWidth / textWidth;
+      ctx.font = `bold ${fontSize}px 'Orbitron', sans-serif`;
     }
-    ctx.shadowBlur=0;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    for (let i = 5; i > 0; i--) {
+      ctx.shadowBlur = i * 12;
+      ctx.shadowColor = `rgba(150,200,255,${0.05 * i})`;
+      ctx.fillStyle = "white";
+      ctx.fillText(text, viewWidth / 2, viewHeight / 2 - 20);
+    }
+    ctx.shadowBlur = 0;
   }
 
-  ctx.font="13px 'Orbitron',sans-serif"; ctx.textBaseline="top";
-  // SHOTS
-  ctx.textAlign="left"; ctx.fillStyle="white"; if(gameState==="playing") ctx.fillText(`SHOTS: ${shotsLeft}`,20,16);
-  // TIME
-  ctx.textAlign="center"; ctx.fillStyle="white"; if(gameState==="playing"){
-    const minutes=Math.floor(timeLeft/60);
-    const seconds=Math.floor(timeLeft%60).toString().padStart(2,"0");
-    ctx.fillText(`TIME: ${minutes}:${seconds}`,viewWidth/2,16);
+  ctx.font = "13px 'Orbitron',sans-serif";
+  ctx.textBaseline = "top";
+
+  // SHOTS 左上
+  ctx.textAlign = "left";
+  ctx.fillStyle = "white";
+  if (gameState === "playing") ctx.fillText(`SHOTS: ${shotsLeft}`, 20, 16);
+
+  // TIME 中央
+  ctx.textAlign = "center";
+  ctx.fillStyle = "white";
+  if (gameState === "playing") {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = Math.floor(timeLeft % 60).toString().padStart(2,"0");
+    ctx.fillText(`TIME: ${minutes}:${seconds}`, viewWidth / 2, 16);
   }
-  // SCORE / HIGH SCORE
-  ctx.textAlign="right"; ctx.fillStyle="white";
-  if(gameState==="title") ctx.fillText(`HIGH SCORE: ${highScore}`,viewWidth-20,16);
-  else ctx.fillText(`SCORE: ${score}`,viewWidth-20,16);
+
+  // SCORE / HIGH SCORE 右上
+  ctx.textAlign = "right";
+  ctx.fillStyle = "white";
+  if (gameState === "title") ctx.fillText(`HIGH SCORE: ${highScore}`, viewWidth-20,16);
+  else ctx.fillText(`SCORE: ${score}`, viewWidth-20,16);
 }
 
 // ==========================
 // ループ
 // ==========================
-function loop(){update(); draw(); requestAnimationFrame(loop);}
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
 loop();
 
 // ==========================
 // スタート
 // ==========================
-startBtn.addEventListener("click",()=>{
-  if(imagesLoaded<ASTEROID_IMAGE_COUNT) return;
-  gameState="playing";
-  startBtn.style.display="none";
-  infoBtn.style.display="none";
-  messageEl.textContent="";
+startBtn.disabled = true;
+startBtn.addEventListener("click", () => {
+  if (imagesLoaded < ASTEROID_IMAGE_COUNT) return;
+  gameState = "playing";
+  startBtn.style.display = "none";
+  infoBtn.style.display = "none";
+  messageEl.textContent = "";
   createAsteroids();
-  currentShotCollisions=0;
+  currentShotCollisions = 0;
 });
 
 // ==========================
 // INFOボタン
 // ==========================
-infoBtn.addEventListener("click",()=>{infoModal.style.display="flex";});
-closeInfo.addEventListener("click",()=>{infoModal.style.display="none";});
+infoBtn.addEventListener("click", () => {
+  infoModal.style.display = "flex";
+});
+closeInfo.addEventListener("click", () => {
+  infoModal.style.display = "none";
+});
