@@ -327,10 +327,10 @@ function draw() {
   });
   ctx.shadowBlur = 0;
 
-  // 小惑星描画（画像）
+  // 小惑星描画（画像対応）
   asteroids.forEach(a => {
-    if (!a.alive) return;
-    ctx.drawImage(a.img, a.x - ASTEROID_RADIUS, a.y - ASTEROID_RADIUS, ASTEROID_RADIUS*2, ASTEROID_RADIUS*2);
+    if (!a.alive || !a.img.complete) return; // 画像未ロード時は描画しない
+    ctx.drawImage(a.img, a.x - ASTEROID_RADIUS, a.y - ASTEROID_RADIUS, ASTEROID_RADIUS * 2, ASTEROID_RADIUS * 2);
   });
 
   // タイトル
