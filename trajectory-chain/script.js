@@ -43,6 +43,22 @@ const sounds = {
 };
 
 // ==========================
+// 衝突演出
+// ==========================
+let flashAlpha = 0;
+const shockwaves = [];
+
+function spawnShockwave(x, y) {
+  shockwaves.push({
+    x,
+    y,
+    r: 0,
+    life: 0
+  });
+  flashAlpha = 0.6;
+}
+
+// ==========================
 // 背景星雲
 // ==========================
 const NEBULA_COUNT = 4;
@@ -90,7 +106,6 @@ createStars();
 // 状態
 // ==========================
 let asteroids = [];
-let particles = [];
 let shotsLeft = MAX_SHOTS;
 let trajectory = [];
 let drawing = false;
@@ -102,7 +117,6 @@ let highScore = 0;
 let timeLeft = TIME_LIMIT;
 let timerActive = false;
 
-const shotsEl = document.getElementById("shots");
 const messageEl = document.getElementById("message");
 const startBtn = document.getElementById("startBtn");
 const infoBtn = document.getElementById("infoBtn");
@@ -138,17 +152,11 @@ function createAsteroids() {
   while (asteroids.length < ASTEROID_COUNT) {
     const x = Math.random() * (viewWidth - 100) + 50;
     const y = Math.random() * (viewHeight - 100) + 50;
-    const overlap = asteroids.some(a =>
-      Math.hypot(a.x - x, a.y - y) < ASTEROID_RADIUS * 2 * ASTEROID_SCALE * 1.2
-    );
-    if (overlap) continue;
+    if (asteroids.some(a => Math.hypot(a.x - x, a.y - y) < ASTEROID_RADIUS * 2 * ASTEROID_SCALE)) continue;
 
-    const img = asteroidImages[Math.floor(Math.random() * ASTEROID_IMAGE_COUNT)];
     asteroids.push({
-      x, y,
-      vx: 0, vy: 0,
-      alive: true,
-      img,
+      x, y, vx: 0, vy: 0, alive: true,
+      img: asteroidImages[Math.floor(Math.random() * ASTEROID_IMAGE_COUNT)],
       radius: ASTEROID_RADIUS * ASTEROID_SCALE,
       angle: Math.random() * Math.PI * 2,
       rotationSpeed: (Math.random() * 0.02 + 0.01) * (Math.random() > 0.5 ? 1 : -1)
@@ -157,133 +165,38 @@ function createAsteroids() {
 }
 
 // ==========================
-// 入力
-// ==========================
-canvas.addEventListener("pointerdown", e => {
-  if (gameState !== "playing" || shotsLeft <= 0) return;
-  drawing = true;
-  trajectory = [{ x: e.clientX, y: e.clientY }];
-  currentShotCollisions = 0;
-});
-
-canvas.addEventListener("pointermove", e => {
-  if (!drawing) return;
-  trajectory.push({ x: e.clientX, y: e.clientY });
-});
-
-canvas.addEventListener("pointerup", () => {
-  if (!drawing) return;
-  drawing = false;
-  applyTrajectoryForce();
-  trajectory = [];
-  shotsLeft--;
-});
-
-// ==========================
-// 軌跡 → 力場
-// ==========================
-function applyTrajectoryForce() {
-  if (trajectory.length < 2) return;
-
-  const s = trajectory[0];
-  const e = trajectory[trajectory.length - 1];
-  const dx = e.x - s.x;
-  const dy = e.y - s.y;
-  const len = Math.hypot(dx, dy);
-  if (!len) return;
-
-  const nx = dx / len;
-  const ny = dy / len;
-
-  asteroids.forEach(a => {
-    if (!a.alive) return;
-
-    let min = Infinity;
-    trajectory.forEach(p => {
-      const d = Math.hypot(a.x - p.x, a.y - p.y);
-      if (d < min) min = d;
-    });
-
-    if (min < FORCE_RADIUS) {
-      const f = (FORCE_RADIUS - min) / FORCE_RADIUS;
-      a.vx += nx * f * FORCE_POWER;
-      a.vy += ny * f * FORCE_POWER;
-    }
-  });
-}
-
-// ==========================
-// 粒子生成（炎・軽量）
-// ==========================
-function spawnParticles(x, y, baseRadius) {
-  for (let i = 0; i < 6; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = Math.random() * 1.2 + 0.4;
-    const size = baseRadius * (Math.random() * 0.4 + 0.6);
-
-    particles.push({
-      x, y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      radius: size,
-      alpha: 1,
-      decay: Math.random() * 0.04 + 0.03,
-      stretch: Math.random() * 0.8 + 0.6
-    });
-  }
-}
-
-// ==========================
 // 更新
 // ==========================
 function update() {
-  if (gameState !== "playing") return;
+  shockwaves.forEach((w, i) => {
+    w.life++;
+    w.r += 6 + Math.sin(w.life * 0.3) * 2;
+    if (w.life > 25) shockwaves.splice(i, 1);
+  });
+  flashAlpha *= 0.85;
 
-  timeLeft -= 1 / 60;
-  if (timeLeft <= 0) {
-    timeLeft = 0;
-    sounds.gameover.currentTime = 0;
-    sounds.gameover.play();
-    asteroids.forEach(a => a.alive = false);
-    gameState = "title";
-    startBtn.style.display = "inline-block";
-    infoBtn.style.display = "inline-block";
-  }
+  if (gameState !== "playing") return;
 
   asteroids.forEach(a => {
     if (!a.alive) return;
     a.x += a.vx;
     a.y += a.vy;
     a.angle += a.rotationSpeed;
-    if (a.x < a.radius || a.x > viewWidth - a.radius) a.vx *= -1;
-    if (a.y < a.radius || a.y > viewHeight - a.radius) a.vy *= -1;
   });
 
   for (let i = 0; i < asteroids.length; i++) {
     for (let j = i + 1; j < asteroids.length; j++) {
-      const a = asteroids[i], b = asteroids[j];
+      const a = asteroids[i];
+      const b = asteroids[j];
       if (!a.alive || !b.alive) continue;
       if (Math.hypot(a.x - b.x, a.y - b.y) < a.radius + b.radius) {
-        a.alive = false;
-        b.alive = false;
-
+        a.alive = b.alive = false;
         sounds.collision.currentTime = 0;
         sounds.collision.play();
-
-        spawnParticles(a.x, a.y, a.radius);
-        spawnParticles(b.x, b.y, b.radius);
-
-        score += 10;
+        spawnShockwave((a.x + b.x) / 2, (a.y + b.y) / 2);
       }
     }
   }
-
-  particles.forEach(p => {
-    p.x += p.vx;
-    p.y += p.vy;
-    p.alpha -= p.decay;
-  });
-  particles = particles.filter(p => p.alpha > 0);
 }
 
 // ==========================
@@ -302,25 +215,18 @@ function draw() {
     ctx.restore();
   });
 
-  ctx.globalCompositeOperation = "lighter";
-  particles.forEach(p => {
-    ctx.save();
-    ctx.translate(p.x, p.y);
-    ctx.rotate(Math.atan2(p.vy, p.vx));
-    ctx.scale(1, p.stretch);
-
-    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, p.radius);
-    g.addColorStop(0, `rgba(255,255,220,${p.alpha})`);
-    g.addColorStop(0.4, `rgba(255,140,60,${p.alpha * 0.8})`);
-    g.addColorStop(1, "rgba(255,60,0,0)");
-
-    ctx.fillStyle = g;
+  shockwaves.forEach(w => {
+    ctx.strokeStyle = `rgba(180,220,255,${1 - w.life / 25})`;
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(0, 0, p.radius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    ctx.arc(w.x, w.y, w.r, 0, Math.PI * 2);
+    ctx.stroke();
   });
-  ctx.globalCompositeOperation = "source-over";
+
+  if (flashAlpha > 0.01) {
+    ctx.fillStyle = `rgba(255,255,255,${flashAlpha})`;
+    ctx.fillRect(0, 0, viewWidth, viewHeight);
+  }
 }
 
 // ==========================
@@ -334,7 +240,7 @@ function loop() {
 loop();
 
 // ==========================
-// スタート
+// UI
 // ==========================
 startBtn.disabled = true;
 startBtn.addEventListener("click", () => {
@@ -342,15 +248,9 @@ startBtn.addEventListener("click", () => {
   gameState = "playing";
   startBtn.style.display = "none";
   infoBtn.style.display = "none";
+  messageEl.textContent = "";
   createAsteroids();
 });
 
-// ==========================
-// INFO
-// ==========================
-infoBtn.addEventListener("click", () => {
-  infoModal.style.display = "flex";
-});
-closeInfo.addEventListener("click", () => {
-  infoModal.style.display = "none";
-});
+infoBtn.addEventListener("click", () => infoModal.style.display = "flex");
+closeInfo.addEventListener("click", () => infoModal.style.display = "none");
