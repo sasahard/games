@@ -25,12 +25,13 @@ resize();
 // 定数
 // ==========================
 const ASTEROID_COUNT = 10;
-const ASTEROID_RADIUS = 12; // 元サイズ
-const ASTEROID_SCALE = 1.5; // 描画と判定に適用
+const ASTEROID_RADIUS = 12;
+const ASTEROID_SCALE = 1.5; // 画像表示倍率
 const MAX_SHOTS = 5;
 const FORCE_RADIUS = 140;
 const FORCE_POWER = 6;
 const TIME_LIMIT = 60; // 秒
+const ASTEROID_IMAGE_COUNT = 5;
 
 // ==========================
 // 効果音
@@ -42,22 +43,10 @@ const sounds = {
 };
 
 // ==========================
-// 惑星画像
-// ==========================
-const ASTEROID_IMAGE_COUNT = 5;
-const asteroidImages = [];
-for (let i = 1; i <= ASTEROID_IMAGE_COUNT; i++) {
-  const img = new Image();
-  img.src = `images/planet${i}.png`;
-  asteroidImages.push(img);
-}
-
-// ==========================
 // 背景星雲
 // ==========================
 const NEBULA_COUNT = 4;
 const nebulas = [];
-
 function createNebulas() {
   nebulas.length = 0;
   for (let i = 0; i < NEBULA_COUNT; i++) {
@@ -80,7 +69,6 @@ createNebulas();
 // ==========================
 const STAR_COUNT = 450;
 const stars = [];
-
 function createStars() {
   stars.length = 0;
   for (let i = 0; i < STAR_COUNT; i++) {
@@ -121,6 +109,23 @@ const infoModal = document.getElementById("infoModal");
 const closeInfo = document.getElementById("closeInfo");
 
 // ==========================
+// 惑星画像ロード
+// ==========================
+const asteroidImages = [];
+let imagesLoaded = 0;
+for (let i = 1; i <= ASTEROID_IMAGE_COUNT; i++) {
+  const img = new Image();
+  img.src = `images/asteroid${i}.png`;
+  img.onload = () => {
+    imagesLoaded++;
+    if (imagesLoaded === ASTEROID_IMAGE_COUNT) {
+      startBtn.disabled = false; // 全画像ロード完了でボタン有効化
+    }
+  };
+  asteroidImages.push(img);
+}
+
+// ==========================
 // 小惑星生成
 // ==========================
 function createAsteroids() {
@@ -134,10 +139,10 @@ function createAsteroids() {
   while (asteroids.length < ASTEROID_COUNT) {
     const x = Math.random() * (viewWidth - 100) + 50;
     const y = Math.random() * (viewHeight - 100) + 50;
-    const overlap = asteroids.some(a => Math.hypot(a.x - x, a.y - y) < ASTEROID_RADIUS * 2 * ASTEROID_SCALE * 1.5);
+    const overlap = asteroids.some(a => Math.hypot(a.x - x, a.y - y) < ASTEROID_RADIUS * 2.5);
     if (overlap) continue;
 
-    const img = asteroidImages[Math.floor(Math.random() * asteroidImages.length)];
+    const img = asteroidImages[Math.floor(Math.random() * ASTEROID_IMAGE_COUNT)];
     asteroids.push({ x, y, vx: 0, vy: 0, alive: true, img });
   }
 }
@@ -233,7 +238,8 @@ function update() {
       sounds.gameover.currentTime = 0;
       sounds.gameover.play();
 
-      asteroids.forEach(a => a.alive = false); // GAME OVERで惑星消す
+      // 惑星を全消去
+      asteroids.forEach(a => a.alive = false);
 
       setTimeout(() => {
         gameState = "title";
@@ -252,8 +258,8 @@ function update() {
     a.x += a.vx;
     a.y += a.vy;
 
-    if (a.x < ASTEROID_RADIUS * ASTEROID_SCALE || a.x > viewWidth - ASTEROID_RADIUS * ASTEROID_SCALE) a.vx *= -1;
-    if (a.y < ASTEROID_RADIUS * ASTEROID_SCALE || a.y > viewHeight - ASTEROID_RADIUS * ASTEROID_SCALE) a.vy *= -1;
+    if (a.x < ASTEROID_RADIUS || a.x > viewWidth - ASTEROID_RADIUS) a.vx *= -1;
+    if (a.y < ASTEROID_RADIUS || a.y > viewHeight - ASTEROID_RADIUS) a.vy *= -1;
   });
 
   // 惑星衝突
@@ -262,7 +268,7 @@ function update() {
       const a = asteroids[i];
       const b = asteroids[j];
       if (!a.alive || !b.alive) continue;
-      if (Math.hypot(a.x - b.x, a.y - b.y) < ASTEROID_RADIUS * 2 * ASTEROID_SCALE) {
+      if (Math.hypot(a.x - b.x, a.y - b.y) < ASTEROID_RADIUS * 2) {
         a.alive = false;
         b.alive = false;
 
@@ -298,6 +304,7 @@ function draw() {
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, viewWidth, viewHeight);
 
+  // 星雲
   nebulas.forEach(n => {
     const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
     g.addColorStop(0, `rgba(${n.color}, ${n.alpha * 1.8})`);
@@ -309,6 +316,7 @@ function draw() {
     ctx.fill();
   });
 
+  // 星
   stars.forEach(s => {
     const colorR = 255;
     const colorG = 255 - s.colorOffset;
@@ -325,7 +333,7 @@ function draw() {
 
   // 惑星描画
   asteroids.forEach(a => {
-    if (!a.alive) return;
+    if (!a.alive || !a.img.complete) return;
     ctx.drawImage(
       a.img,
       a.x - ASTEROID_RADIUS * ASTEROID_SCALE,
@@ -395,7 +403,9 @@ loop();
 // ==========================
 // スタート
 // ==========================
+startBtn.disabled = true; // 画像ロード前は無効化
 startBtn.addEventListener("click", () => {
+  if (imagesLoaded < ASTEROID_IMAGE_COUNT) return;
   gameState = "playing";
   startBtn.style.display = "none";
   infoBtn.style.display = "none";
