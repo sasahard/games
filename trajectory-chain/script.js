@@ -41,6 +41,16 @@ const sounds = {
 };
 
 // ==========================
+// 小惑星画像
+// ==========================
+const asteroidImages = [];
+for (let i = 1; i <= 5; i++) {
+  const img = new Image();
+  img.src = `images/asteroid${i}.png`;
+  asteroidImages.push(img);
+}
+
+// ==========================
 // 背景星雲
 // ==========================
 const NEBULA_COUNT = 4;
@@ -125,7 +135,14 @@ function createAsteroids() {
     const overlap = asteroids.some(a => Math.hypot(a.x - x, a.y - y) < ASTEROID_RADIUS * 2.5);
     if (overlap) continue;
 
-    asteroids.push({ x, y, vx: 0, vy: 0, alive: true });
+    asteroids.push({
+      x,
+      y,
+      vx: 0,
+      vy: 0,
+      alive: true,
+      img: asteroidImages[Math.floor(Math.random() * asteroidImages.length)]
+    });
   }
 }
 
@@ -310,12 +327,10 @@ function draw() {
   });
   ctx.shadowBlur = 0;
 
+  // 小惑星描画（画像）
   asteroids.forEach(a => {
     if (!a.alive) return;
-    ctx.beginPath();
-    ctx.arc(a.x, a.y, ASTEROID_RADIUS, 0, Math.PI * 2);
-    ctx.fillStyle = "#ffffff";
-    ctx.fill();
+    ctx.drawImage(a.img, a.x - ASTEROID_RADIUS, a.y - ASTEROID_RADIUS, ASTEROID_RADIUS*2, ASTEROID_RADIUS*2);
   });
 
   // タイトル
