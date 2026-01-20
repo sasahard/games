@@ -119,7 +119,7 @@ for (let i = 1; i <= ASTEROID_IMAGE_COUNT; i++) {
   img.onload = () => {
     imagesLoaded++;
     if (imagesLoaded === ASTEROID_IMAGE_COUNT) {
-      startBtn.disabled = false; // 全画像ロード完了でボタン有効化
+      startBtn.disabled = false;
     }
   };
   asteroidImages.push(img);
@@ -139,11 +139,14 @@ function createAsteroids() {
   while (asteroids.length < ASTEROID_COUNT) {
     const x = Math.random() * (viewWidth - 100) + 50;
     const y = Math.random() * (viewHeight - 100) + 50;
-    const overlap = asteroids.some(a => Math.hypot(a.x - x, a.y - y) < ASTEROID_RADIUS * 2.5);
+    const overlap = asteroids.some(a => Math.hypot(a.x - x, a.y - y) < ASTEROID_RADIUS * 2 * ASTEROID_SCALE * 1.2);
     if (overlap) continue;
 
     const img = asteroidImages[Math.floor(Math.random() * ASTEROID_IMAGE_COUNT)];
-    asteroids.push({ x, y, vx: 0, vy: 0, alive: true, img });
+    asteroids.push({
+      x, y, vx: 0, vy: 0, alive: true, img,
+      radius: ASTEROID_RADIUS * ASTEROID_SCALE // 当たり判定用半径
+    });
   }
 }
 
@@ -258,8 +261,8 @@ function update() {
     a.x += a.vx;
     a.y += a.vy;
 
-    if (a.x < ASTEROID_RADIUS || a.x > viewWidth - ASTEROID_RADIUS) a.vx *= -1;
-    if (a.y < ASTEROID_RADIUS || a.y > viewHeight - ASTEROID_RADIUS) a.vy *= -1;
+    if (a.x < a.radius || a.x > viewWidth - a.radius) a.vx *= -1;
+    if (a.y < a.radius || a.y > viewHeight - a.radius) a.vy *= -1;
   });
 
   // 惑星衝突
@@ -268,7 +271,7 @@ function update() {
       const a = asteroids[i];
       const b = asteroids[j];
       if (!a.alive || !b.alive) continue;
-      if (Math.hypot(a.x - b.x, a.y - b.y) < ASTEROID_RADIUS * 2) {
+      if (Math.hypot(a.x - b.x, a.y - b.y) < a.radius + b.radius) {
         a.alive = false;
         b.alive = false;
 
@@ -336,10 +339,10 @@ function draw() {
     if (!a.alive || !a.img.complete) return;
     ctx.drawImage(
       a.img,
-      a.x - ASTEROID_RADIUS * ASTEROID_SCALE,
-      a.y - ASTEROID_RADIUS * ASTEROID_SCALE,
-      ASTEROID_RADIUS * 2 * ASTEROID_SCALE,
-      ASTEROID_RADIUS * 2 * ASTEROID_SCALE
+      a.x - a.radius,
+      a.y - a.radius,
+      a.radius * 2,
+      a.radius * 2
     );
   });
 
@@ -403,7 +406,7 @@ loop();
 // ==========================
 // スタート
 // ==========================
-startBtn.disabled = true; // 画像ロード前は無効化
+startBtn.disabled = true;
 startBtn.addEventListener("click", () => {
   if (imagesLoaded < ASTEROID_IMAGE_COUNT) return;
   gameState = "playing";
@@ -420,7 +423,6 @@ startBtn.addEventListener("click", () => {
 infoBtn.addEventListener("click", () => {
   infoModal.style.display = "flex";
 });
-
 closeInfo.addEventListener("click", () => {
   infoModal.style.display = "none";
 });
