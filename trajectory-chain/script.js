@@ -31,6 +31,8 @@ const MAX_SHOTS = 5;
 const FORCE_RADIUS = 140;
 const FORCE_POWER = 6;
 
+const TIME_LIMIT = 60; // 秒
+
 // ==========================
 // 背景星雲
 // ==========================
@@ -87,7 +89,12 @@ let drawing = false;
 let waitingNext = false;
 let gameState = "title"; // title / playing
 let score = 0;
-let currentShotCollisions = 0; // 1ショット内の衝突数
+let currentShotCollisions = 0;
+let highScore = 0;
+
+let timeLeft = TIME_LIMIT;
+let timerActive = false;
+let gameOverTimeout = null;
 
 const shotsEl = document.getElementById("shots");
 const messageEl = document.getElementById("message");
@@ -101,6 +108,8 @@ function createAsteroids() {
   shotsLeft = MAX_SHOTS;
   waitingNext = false;
   currentShotCollisions = 0;
+  timeLeft = TIME_LIMIT;
+  timerActive = true;
 
   while (asteroids.length < ASTEROID_COUNT) {
     const x = Math.random() * (viewWidth - 100) + 50;
@@ -201,6 +210,22 @@ function update() {
 
   if (gameState !== "playing") return;
 
+  // タイマー
+  if (timerActive) {
+    timeLeft -= 1/60; // 60fps想定
+    if (timeLeft <= 0) {
+      timeLeft = 0;
+      timerActive = false;
+      messageEl.textContent = "GAME OVER";
+      setTimeout(() => {
+        gameState = "title";
+        messageEl.textContent = "";
+        if (score > highScore) highScore = score;
+        score = 0;
+      }, 1000);
+    }
+  }
+
   // 惑星移動
   asteroids.forEach(a => {
     if (!a.alive) return;
@@ -235,10 +260,9 @@ function update() {
     setTimeout(() => {
       createAsteroids();
       waitingNext = false;
+      timeLeft = TIME_LIMIT; // 全消しでタイマーリセット
     }, 700);
   }
-
-  shotsEl.textContent = `shots: ${shotsLeft}`;
 }
 
 // ==========================
@@ -287,7 +311,17 @@ function draw() {
   // タイトル（タイトル状態のみ）
   if (gameState === "title") {
     const text = "Trajectory Chain";
-    ctx.font = "bold 56px 'Orbitron', sans-serif";
+
+    // 横幅に合わせて自動フォントサイズ
+    let fontSize = 56;
+    ctx.font = `bold ${fontSize}px 'Orbitron', sans-serif`;
+    let textWidth = ctx.measureText(text).width;
+    const maxWidth = viewWidth * 0.9; // 少し余白
+    if (textWidth > maxWidth) {
+      fontSize = fontSize * maxWidth / textWidth;
+      ctx.font = `bold ${fontSize}px 'Orbitron', sans-serif`;
+    }
+
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
@@ -301,15 +335,30 @@ function draw() {
     ctx.shadowBlur = 0;
   }
 
-  // SCORE / HIGH SCORE
+  // SHOTS / TIME / SCORE (TITLE時はHIGH SCORE)
   ctx.font = "13px 'Orbitron', sans-serif";
-  ctx.textAlign = "right";
   ctx.textBaseline = "top";
+
+  // SHOTS 左上
+  ctx.textAlign = "left";
+  ctx.fillStyle = "white";
+  if (gameState === "playing") ctx.fillText(`SHOTS: ${shotsLeft}`, 20, 16);
+
+  // TIME 中央
+  ctx.textAlign = "center";
+  ctx.fillStyle = "white";
+  if (gameState === "playing") {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = Math.floor(timeLeft % 60).toString().padStart(2, "0");
+    ctx.fillText(`TIME: ${minutes}:${seconds}`, viewWidth / 2, 16);
+  }
+
+  // SCORE / HIGH SCORE 右上
+  ctx.textAlign = "right";
+  ctx.fillStyle = "white";
   if (gameState === "title") {
-    ctx.fillStyle = "white";
-    ctx.fillText(`HIGH SCORE: ${score}`, viewWidth - 20, 16);
+    ctx.fillText(`HIGH SCORE: ${highScore}`, viewWidth - 20, 16);
   } else {
-    ctx.fillStyle = "white";
     ctx.fillText(`SCORE: ${score}`, viewWidth - 20, 16);
   }
 }
