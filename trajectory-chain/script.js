@@ -26,11 +26,11 @@ resize();
 // ==========================
 const ASTEROID_COUNT = 10;
 const ASTEROID_RADIUS = 12;
-const ASTEROID_SCALE = 1.5; // 画像表示倍率
+const ASTEROID_SCALE = 1.5;
 const MAX_SHOTS = 5;
 const FORCE_RADIUS = 140;
 const FORCE_POWER = 6;
-const TIME_LIMIT = 60; // 秒
+const TIME_LIMIT = 60;
 const ASTEROID_IMAGE_COUNT = 5;
 
 // ==========================
@@ -41,6 +41,22 @@ const sounds = {
   stageclear: new Audio("sounds/clear.wav"),
   gameover: new Audio("sounds/gameover.wav")
 };
+
+// ==========================
+// 爆発演出（追加）
+// ==========================
+let flashAlpha = 0;
+const shockwaves = [];
+
+function triggerExplosion(x, y) {
+  flashAlpha = 0.35;
+  shockwaves.push({
+    x,
+    y,
+    r: 0,
+    life: 1
+  });
+}
 
 // ==========================
 // 背景星雲
@@ -94,7 +110,7 @@ let shotsLeft = MAX_SHOTS;
 let trajectory = [];
 let drawing = false;
 let waitingNext = false;
-let gameState = "title"; // title / playing
+let gameState = "title";
 let score = 0;
 let currentShotCollisions = 0;
 let highScore = 0;
@@ -150,7 +166,7 @@ function createAsteroids() {
       vy: 0,
       alive: true,
       img,
-      radius: ASTEROID_RADIUS * ASTEROID_SCALE, // 当たり判定用半径
+      radius: ASTEROID_RADIUS * ASTEROID_SCALE,
       angle: Math.random() * Math.PI * 2,
       rotationSpeed: (Math.random() * 0.02 + 0.01) * (Math.random() > 0.5 ? 1 : -1)
     });
@@ -217,7 +233,6 @@ function applyTrajectoryForce() {
 // 更新
 // ==========================
 function update() {
-  // 星雲
   nebulas.forEach(n => {
     n.x += n.vx;
     n.y += n.vy;
@@ -227,7 +242,6 @@ function update() {
     if (n.y > viewHeight + n.r) n.y = -n.r;
   });
 
-  // 星
   stars.forEach(s => {
     s.x -= s.speed;
     s.y -= s.speed;
@@ -236,20 +250,24 @@ function update() {
     s.twinklePhase += 0.02;
   });
 
+  shockwaves.forEach(sw => {
+    sw.r += 12;
+    sw.life -= 0.04;
+  });
+  while (shockwaves.length && shockwaves[0].life <= 0) shockwaves.shift();
+  flashAlpha *= 0.9;
+
   if (gameState !== "playing") return;
 
-  // タイマー
   if (timerActive) {
-    timeLeft -= 1/60;
+    timeLeft -= 1 / 60;
     if (timeLeft <= 0) {
       timeLeft = 0;
       timerActive = false;
       messageEl.textContent = "GAME OVER";
       sounds.gameover.currentTime = 0;
       sounds.gameover.play();
-
       asteroids.forEach(a => a.alive = false);
-
       setTimeout(() => {
         gameState = "title";
         messageEl.textContent = "";
@@ -261,18 +279,15 @@ function update() {
     }
   }
 
-  // 惑星移動 & 回転
   asteroids.forEach(a => {
     if (!a.alive) return;
     a.x += a.vx;
     a.y += a.vy;
     a.angle += a.rotationSpeed;
-
     if (a.x < a.radius || a.x > viewWidth - a.radius) a.vx *= -1;
     if (a.y < a.radius || a.y > viewHeight - a.radius) a.vy *= -1;
   });
 
-  // 惑星衝突
   for (let i = 0; i < asteroids.length; i++) {
     for (let j = i + 1; j < asteroids.length; j++) {
       const a = asteroids[i];
@@ -282,24 +297,21 @@ function update() {
         a.alive = false;
         b.alive = false;
 
+        triggerExplosion((a.x + b.x) / 2, (a.y + b.y) / 2);
+
         sounds.collision.currentTime = 0;
         sounds.collision.play();
-
         currentShotCollisions++;
-        const bonusMultiplier = Math.pow(1.5, currentShotCollisions - 1);
-        score += Math.round(10 * bonusMultiplier);
+        score += Math.round(10 * Math.pow(1.5, currentShotCollisions - 1));
       }
     }
   }
 
-  // 全消しで自動再描画
   if (asteroids.every(a => !a.alive) && !waitingNext) {
     waitingNext = true;
-
     setTimeout(() => {
       sounds.stageclear.currentTime = 0;
       sounds.stageclear.play();
-
       createAsteroids();
       waitingNext = false;
       timeLeft = TIME_LIMIT;
@@ -314,7 +326,6 @@ function draw() {
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, viewWidth, viewHeight);
 
-  // 星雲
   nebulas.forEach(n => {
     const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
     g.addColorStop(0, `rgba(${n.color}, ${n.alpha * 1.8})`);
@@ -326,82 +337,65 @@ function draw() {
     ctx.fill();
   });
 
-  // 星
   stars.forEach(s => {
-    const colorR = 255;
-    const colorG = 255 - s.colorOffset;
-    const colorB = 255 - s.colorOffset;
     const twinkle = Math.sin(s.twinklePhase) * 0.4 + 0.6;
     ctx.shadowBlur = s.glow;
     ctx.shadowColor = `rgba(255,255,255,${s.alpha * twinkle})`;
-    ctx.fillStyle = `rgba(${colorR},${colorG},${colorB},${s.alpha * twinkle})`;
+    ctx.fillStyle = `rgba(255,255,255,${s.alpha * twinkle})`;
     ctx.beginPath();
     ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
     ctx.fill();
   });
   ctx.shadowBlur = 0;
 
-  // 惑星描画（回転付き）
   asteroids.forEach(a => {
     if (!a.alive || !a.img.complete) return;
     ctx.save();
     ctx.translate(a.x, a.y);
     ctx.rotate(a.angle);
-    ctx.drawImage(
-      a.img,
-      -a.radius,
-      -a.radius,
-      a.radius * 2,
-      a.radius * 2
-    );
+    ctx.drawImage(a.img, -a.radius, -a.radius, a.radius * 2, a.radius * 2);
     ctx.restore();
   });
 
-  // タイトル
-  if (gameState === "title") {
-    const text = "Trajectory Chain";
-    let fontSize = 56;
-    ctx.font = `bold ${fontSize}px 'Orbitron', sans-serif`;
-    let textWidth = ctx.measureText(text).width;
-    const maxWidth = viewWidth * 0.9;
-    if (textWidth > maxWidth) {
-      fontSize = fontSize * maxWidth / textWidth;
-      ctx.font = `bold ${fontSize}px 'Orbitron', sans-serif`;
-    }
+  shockwaves.forEach(sw => {
+    ctx.strokeStyle = `rgba(150,200,255,${sw.life})`;
+    ctx.lineWidth = 2 + Math.sin((1 - sw.life) * Math.PI) * 3;
+    ctx.beginPath();
+    ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+    ctx.stroke();
+  });
 
+  if (flashAlpha > 0.01) {
+    ctx.fillStyle = `rgba(255,255,255,${flashAlpha})`;
+    ctx.fillRect(0, 0, viewWidth, viewHeight);
+  }
+
+  if (gameState === "title") {
+    ctx.font = "bold 56px 'Orbitron', sans-serif";
     ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    for (let i = 5; i > 0; i--) {
-      ctx.shadowBlur = i * 12;
-      ctx.shadowColor = `rgba(150,200,255,${0.05 * i})`;
-      ctx.fillStyle = "white";
-      ctx.fillText(text, viewWidth / 2, viewHeight / 2 - 20);
-    }
-    ctx.shadowBlur = 0;
+    ctx.fillStyle = "white";
+    ctx.fillText("Trajectory Chain", viewWidth / 2, viewHeight / 2 - 20);
   }
 
   ctx.font = "13px 'Orbitron',sans-serif";
   ctx.textBaseline = "top";
-
-  // SHOTS 左上
-  ctx.textAlign = "left";
   ctx.fillStyle = "white";
-  if (gameState === "playing") ctx.fillText(`SHOTS: ${shotsLeft}`, 20, 16);
 
-  // TIME 中央
-  ctx.textAlign = "center";
-  ctx.fillStyle = "white";
   if (gameState === "playing") {
-    const minutes = Math.floor(timeLeft / 60);
-    const seconds = Math.floor(timeLeft % 60).toString().padStart(2,"0");
-    ctx.fillText(`TIME: ${minutes}:${seconds}`, viewWidth / 2, 16);
-  }
+    ctx.textAlign = "left";
+    ctx.fillText(`SHOTS: ${shotsLeft}`, 20, 16);
 
-  // SCORE / HIGH SCORE 右上
-  ctx.textAlign = "right";
-  ctx.fillStyle = "white";
-  if (gameState === "title") ctx.fillText(`HIGH SCORE: ${highScore}`, viewWidth-20,16);
-  else ctx.fillText(`SCORE: ${score}`, viewWidth-20,16);
+    ctx.textAlign = "center";
+    const m = Math.floor(timeLeft / 60);
+    const s = Math.floor(timeLeft % 60).toString().padStart(2, "0");
+    ctx.fillText(`TIME: ${m}:${s}`, viewWidth / 2, 16);
+
+    ctx.textAlign = "right";
+    ctx.fillText(`SCORE: ${score}`, viewWidth - 20, 16);
+  } else {
+    ctx.textAlign = "right";
+    ctx.fillText(`HIGH SCORE: ${highScore}`, viewWidth - 20, 16);
+  }
 }
 
 // ==========================
@@ -429,7 +423,7 @@ startBtn.addEventListener("click", () => {
 });
 
 // ==========================
-// INFOボタン
+// INFO
 // ==========================
 infoBtn.addEventListener("click", () => {
   infoModal.style.display = "flex";
