@@ -43,12 +43,6 @@ const sounds = {
 };
 
 // ==========================
-// 衝撃波・フラッシュ
-// ==========================
-const shockwaves = [];
-let flashAlpha = 0;
-
-// ==========================
 // 背景星雲
 // ==========================
 const NEBULA_COUNT = 4;
@@ -107,6 +101,11 @@ let highScore = 0;
 let timeLeft = TIME_LIMIT;
 let timerActive = false;
 
+// 💥 フラッシュ & 衝撃波
+let flashAlpha = 0;
+const shockwaves = [];
+
+const shotsEl = document.getElementById("shots");
 const messageEl = document.getElementById("message");
 const startBtn = document.getElementById("startBtn");
 const infoBtn = document.getElementById("infoBtn");
@@ -144,25 +143,22 @@ function createAsteroids() {
   while (asteroids.length < ASTEROID_COUNT) {
     const x = Math.random() * (viewWidth - 100) + 50;
     const y = Math.random() * (viewHeight - 100) + 50;
-    const overlap = asteroids.some(a => Math.hypot(a.x - x, a.y - y) < ASTEROID_RADIUS * 2 * ASTEROID_SCALE * 1.2);
+    const overlap = asteroids.some(a =>
+      Math.hypot(a.x - x, a.y - y) < ASTEROID_RADIUS * 2 * ASTEROID_SCALE * 1.2
+    );
     if (overlap) continue;
 
     const img = asteroidImages[Math.floor(Math.random() * ASTEROID_IMAGE_COUNT)];
     asteroids.push({
-      x, y, vx: 0, vy: 0, alive: true, img,
+      x, y,
+      vx: 0, vy: 0,
+      alive: true,
+      img,
       radius: ASTEROID_RADIUS * ASTEROID_SCALE,
       angle: Math.random() * Math.PI * 2,
       rotationSpeed: (Math.random() * 0.02 + 0.01) * (Math.random() > 0.5 ? 1 : -1)
     });
   }
-}
-
-// ==========================
-// 衝撃波生成
-// ==========================
-function spawnShockwave(x, y) {
-  shockwaves.push({ x, y, r: 0, life: 0 });
-  flashAlpha = 0.35;
 }
 
 // ==========================
@@ -199,7 +195,6 @@ function applyTrajectoryForce() {
   const dy = e.y - s.y;
   const len = Math.hypot(dx, dy);
   if (!len) return;
-
   const nx = dx / len;
   const ny = dy / len;
 
@@ -239,25 +234,31 @@ function update() {
     s.twinklePhase += 0.02;
   });
 
-  flashAlpha *= 0.85;
-
-  shockwaves.forEach(w => {
-    w.life++;
-    w.r += 6;
-  });
-  while (shockwaves.length && shockwaves[0].life > 30) shockwaves.shift();
+  flashAlpha = Math.max(0, flashAlpha - 0.08);
+  shockwaves.forEach(w => w.t += 1);
+  for (let i = shockwaves.length - 1; i >= 0; i--) {
+    if (shockwaves[i].t > 20) shockwaves.splice(i, 1);
+  }
 
   if (gameState !== "playing") return;
 
-  timeLeft -= 1 / 60;
-  if (timeLeft <= 0) {
-    timeLeft = 0;
-    gameState = "title";
-    messageEl.textContent = "GAME OVER";
-    sounds.gameover.play();
-    asteroids.forEach(a => a.alive = false);
-    startBtn.style.display = "inline-block";
-    infoBtn.style.display = "inline-block";
+  if (timerActive) {
+    timeLeft -= 1 / 60;
+    if (timeLeft <= 0) {
+      timeLeft = 0;
+      timerActive = false;
+      messageEl.textContent = "GAME OVER";
+      sounds.gameover.play();
+      asteroids.forEach(a => a.alive = false);
+      setTimeout(() => {
+        gameState = "title";
+        messageEl.textContent = "";
+        if (score > highScore) highScore = score;
+        score = 0;
+        startBtn.style.display = "inline-block";
+        infoBtn.style.display = "inline-block";
+      }, 1000);
+    }
   }
 
   asteroids.forEach(a => {
@@ -265,6 +266,8 @@ function update() {
     a.x += a.vx;
     a.y += a.vy;
     a.angle += a.rotationSpeed;
+    if (a.x < a.radius || a.x > viewWidth - a.radius) a.vx *= -1;
+    if (a.y < a.radius || a.y > viewHeight - a.radius) a.vy *= -1;
   });
 
   for (let i = 0; i < asteroids.length; i++) {
@@ -273,14 +276,28 @@ function update() {
       const b = asteroids[j];
       if (!a.alive || !b.alive) continue;
       if (Math.hypot(a.x - b.x, a.y - b.y) < a.radius + b.radius) {
-        a.alive = b.alive = false;
+        a.alive = false;
+        b.alive = false;
+
+        flashAlpha = 0.6;
+        shockwaves.push({ x: a.x, y: a.y, t: 0 });
+
         sounds.collision.currentTime = 0;
         sounds.collision.play();
-        spawnShockwave((a.x + b.x) / 2, (a.y + b.y) / 2);
+
         currentShotCollisions++;
         score += Math.round(10 * Math.pow(1.5, currentShotCollisions - 1));
       }
     }
+  }
+
+  if (asteroids.every(a => !a.alive) && !waitingNext) {
+    waitingNext = true;
+    setTimeout(() => {
+      sounds.stageclear.play();
+      createAsteroids();
+      waitingNext = false;
+    }, 10);
   }
 }
 
@@ -293,7 +310,7 @@ function draw() {
 
   nebulas.forEach(n => {
     const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
-    g.addColorStop(0, `rgba(${n.color},${n.alpha})`);
+    g.addColorStop(0, `rgba(${n.color},${n.alpha * 1.8})`);
     g.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = g;
     ctx.beginPath();
@@ -302,14 +319,18 @@ function draw() {
   });
 
   stars.forEach(s => {
-    ctx.fillStyle = `rgba(255,255,255,${s.alpha})`;
+    const tw = Math.sin(s.twinklePhase) * 0.4 + 0.6;
+    ctx.shadowBlur = s.glow;
+    ctx.shadowColor = `rgba(255,255,255,${s.alpha * tw})`;
+    ctx.fillStyle = `rgba(255,255,255,${s.alpha * tw})`;
     ctx.beginPath();
     ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
     ctx.fill();
   });
+  ctx.shadowBlur = 0;
 
   asteroids.forEach(a => {
-    if (!a.alive) return;
+    if (!a.alive || !a.img.complete) return;
     ctx.save();
     ctx.translate(a.x, a.y);
     ctx.rotate(a.angle);
@@ -318,30 +339,40 @@ function draw() {
   });
 
   shockwaves.forEach(w => {
-    const p = w.life / 30;
-    const alpha = Math.sin(p * Math.PI);
-    ctx.strokeStyle = `rgba(200,220,255,${alpha})`;
+    const p = w.t / 20;
+    const r = p * 180;
+    const alpha = Math.sin(p * Math.PI) * 0.6;
+    ctx.strokeStyle = `rgba(180,220,255,${alpha})`;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(w.x, w.y, w.r, 0, Math.PI * 2);
+    ctx.arc(w.x, w.y, r, 0, Math.PI * 2);
     ctx.stroke();
   });
 
-  if (flashAlpha > 0.01) {
+  if (flashAlpha > 0) {
     ctx.fillStyle = `rgba(255,255,255,${flashAlpha})`;
     ctx.fillRect(0, 0, viewWidth, viewHeight);
   }
 
+  // UI（元コード完全維持）
+  ctx.font = "13px 'Orbitron',sans-serif";
   ctx.fillStyle = "white";
-  ctx.font = "13px Orbitron";
   if (gameState === "playing") {
     ctx.fillText(`SHOTS: ${shotsLeft}`, 20, 16);
-    ctx.fillText(`TIME: ${Math.floor(timeLeft)}`, viewWidth / 2, 16);
+    ctx.textAlign = "center";
+    const m = Math.floor(timeLeft / 60);
+    const s = Math.floor(timeLeft % 60).toString().padStart(2, "0");
+    ctx.fillText(`TIME: ${m}:${s}`, viewWidth / 2, 16);
     ctx.textAlign = "right";
     ctx.fillText(`SCORE: ${score}`, viewWidth - 20, 16);
+  } else {
+    ctx.textAlign = "right";
+    ctx.fillText(`HIGH SCORE: ${highScore}`, viewWidth - 20, 16);
   }
 }
 
+// ==========================
+// ループ
 // ==========================
 function loop() {
   update();
@@ -350,6 +381,8 @@ function loop() {
 }
 loop();
 
+// ==========================
+// スタート & INFO
 // ==========================
 startBtn.disabled = true;
 startBtn.addEventListener("click", () => {
@@ -360,3 +393,5 @@ startBtn.addEventListener("click", () => {
   messageEl.textContent = "";
   createAsteroids();
 });
+infoBtn.addEventListener("click", () => infoModal.style.display = "flex");
+closeInfo.addEventListener("click", () => infoModal.style.display = "none");
