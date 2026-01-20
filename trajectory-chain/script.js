@@ -144,8 +144,15 @@ function createAsteroids() {
 
     const img = asteroidImages[Math.floor(Math.random() * ASTEROID_IMAGE_COUNT)];
     asteroids.push({
-      x, y, vx: 0, vy: 0, alive: true, img,
-      radius: ASTEROID_RADIUS * ASTEROID_SCALE // 当たり判定用半径
+      x,
+      y,
+      vx: 0,
+      vy: 0,
+      alive: true,
+      img,
+      radius: ASTEROID_RADIUS * ASTEROID_SCALE, // 当たり判定用半径
+      angle: Math.random() * Math.PI * 2,
+      rotationSpeed: (Math.random() * 0.02 + 0.01) * (Math.random() > 0.5 ? 1 : -1)
     });
   }
 }
@@ -241,7 +248,6 @@ function update() {
       sounds.gameover.currentTime = 0;
       sounds.gameover.play();
 
-      // 惑星を全消去
       asteroids.forEach(a => a.alive = false);
 
       setTimeout(() => {
@@ -255,11 +261,12 @@ function update() {
     }
   }
 
-  // 惑星移動
+  // 惑星移動 & 回転
   asteroids.forEach(a => {
     if (!a.alive) return;
     a.x += a.vx;
     a.y += a.vy;
+    a.angle += a.rotationSpeed;
 
     if (a.x < a.radius || a.x > viewWidth - a.radius) a.vx *= -1;
     if (a.y < a.radius || a.y > viewHeight - a.radius) a.vy *= -1;
@@ -334,16 +341,20 @@ function draw() {
   });
   ctx.shadowBlur = 0;
 
-  // 惑星描画
+  // 惑星描画（回転付き）
   asteroids.forEach(a => {
     if (!a.alive || !a.img.complete) return;
+    ctx.save();
+    ctx.translate(a.x, a.y);
+    ctx.rotate(a.angle);
     ctx.drawImage(
       a.img,
-      a.x - a.radius,
-      a.y - a.radius,
+      -a.radius,
+      -a.radius,
       a.radius * 2,
       a.radius * 2
     );
+    ctx.restore();
   });
 
   // タイトル
