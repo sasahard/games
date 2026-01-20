@@ -14,19 +14,18 @@
     <div id="shots"></div>
     <div id="message"></div>
     <button id="startBtn">START</button>
-    <!-- ゲーム説明ボタン -->
     <button id="infoBtn">INFO</button>
   </div>
 
-  <!-- モーダル -->
-  <div id="infoModal">
-    <div id="infoModalContent">
-      <span id="closeModal">&times;</span>
+  <!-- ゲーム説明モーダル -->
+  <div id="infoModal" style="display:none;">
+    <div id="infoContent">
       <p>
         このゲームは、指で軌跡を描いて惑星を衝突させるアクションゲームです。<br>
         SHOTSの回数内で全惑星を消すとスコアが加算されます。<br>
         タイムリミット内にクリアできなければGAME OVERです。
       </p>
+      <button id="closeInfo">閉じる</button>
     </div>
   </div>
 
