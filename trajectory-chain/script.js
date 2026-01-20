@@ -25,13 +25,13 @@ resize();
 // 定数
 // ==========================
 const ASTEROID_COUNT = 10;
-const ASTEROID_RADIUS = 12;
-const ASTEROID_SCALE = 1.5; // 画像表示倍率
+const ASTEROID_RADIUS = 12; // 当たり判定半径
+const IMAGE_SCALE = 1.5; // 画像拡大率
 const MAX_SHOTS = 5;
 const FORCE_RADIUS = 140;
 const FORCE_POWER = 6;
 const TIME_LIMIT = 60; // 秒
-const ASTEROID_IMAGE_COUNT = 5;
+const PARTICLE_COUNT = 15; // 衝突パーティクル数
 
 // ==========================
 // 効果音
@@ -47,6 +47,7 @@ const sounds = {
 // ==========================
 const NEBULA_COUNT = 4;
 const nebulas = [];
+
 function createNebulas() {
   nebulas.length = 0;
   for (let i = 0; i < NEBULA_COUNT; i++) {
@@ -69,6 +70,7 @@ createNebulas();
 // ==========================
 const STAR_COUNT = 450;
 const stars = [];
+
 function createStars() {
   stars.length = 0;
   for (let i = 0; i < STAR_COUNT; i++) {
@@ -87,9 +89,20 @@ function createStars() {
 createStars();
 
 // ==========================
+// 惑星画像ロード
+// ==========================
+const planetImages = [];
+for (let i = 1; i <= 5; i++) {
+  const img = new Image();
+  img.src = `images/planet${i}.png`;
+  planetImages.push(img);
+}
+
+// ==========================
 // 状態
 // ==========================
 let asteroids = [];
+let particles = [];
 let shotsLeft = MAX_SHOTS;
 let trajectory = [];
 let drawing = false;
@@ -109,23 +122,6 @@ const infoModal = document.getElementById("infoModal");
 const closeInfo = document.getElementById("closeInfo");
 
 // ==========================
-// 惑星画像ロード
-// ==========================
-const asteroidImages = [];
-let imagesLoaded = 0;
-for (let i = 1; i <= ASTEROID_IMAGE_COUNT; i++) {
-  const img = new Image();
-  img.src = `images/asteroid${i}.png`;
-  img.onload = () => {
-    imagesLoaded++;
-    if (imagesLoaded === ASTEROID_IMAGE_COUNT) {
-      startBtn.disabled = false;
-    }
-  };
-  asteroidImages.push(img);
-}
-
-// ==========================
 // 小惑星生成
 // ==========================
 function createAsteroids() {
@@ -139,20 +135,33 @@ function createAsteroids() {
   while (asteroids.length < ASTEROID_COUNT) {
     const x = Math.random() * (viewWidth - 100) + 50;
     const y = Math.random() * (viewHeight - 100) + 50;
-    const overlap = asteroids.some(a => Math.hypot(a.x - x, a.y - y) < ASTEROID_RADIUS * 2 * ASTEROID_SCALE * 1.2);
+    const overlap = asteroids.some(a => Math.hypot(a.x - x, a.y - y) < ASTEROID_RADIUS * 2.5);
     if (overlap) continue;
 
-    const img = asteroidImages[Math.floor(Math.random() * ASTEROID_IMAGE_COUNT)];
-    asteroids.push({
-      x,
-      y,
-      vx: 0,
-      vy: 0,
-      alive: true,
-      img,
-      radius: ASTEROID_RADIUS * ASTEROID_SCALE, // 当たり判定用半径
-      angle: Math.random() * Math.PI * 2,
-      rotationSpeed: (Math.random() * 0.02 + 0.01) * (Math.random() > 0.5 ? 1 : -1)
+    const img = planetImages[Math.floor(Math.random() * planetImages.length)];
+
+    asteroids.push({ 
+      x, y, vx: 0, vy: 0, alive: true, 
+      angle: Math.random() * Math.PI * 2, // 自転角度
+      img 
+    });
+  }
+}
+
+// ==========================
+// パーティクル生成
+// ==========================
+function createParticles(x, y, color="#fff") {
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 3 + 1;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: Math.random() * 30 + 20,
+      radius: Math.random() * 4 + 2,
+      color
     });
   }
 }
@@ -248,7 +257,7 @@ function update() {
       sounds.gameover.currentTime = 0;
       sounds.gameover.play();
 
-      asteroids.forEach(a => a.alive = false);
+      asteroids.forEach(a => a.alive = false); // ゲームオーバーで全惑星消す
 
       setTimeout(() => {
         gameState = "title";
@@ -261,15 +270,15 @@ function update() {
     }
   }
 
-  // 惑星移動 & 回転
+  // 惑星移動
   asteroids.forEach(a => {
     if (!a.alive) return;
     a.x += a.vx;
     a.y += a.vy;
-    a.angle += a.rotationSpeed;
+    a.angle += 0.01; // 自転
 
-    if (a.x < a.radius || a.x > viewWidth - a.radius) a.vx *= -1;
-    if (a.y < a.radius || a.y > viewHeight - a.radius) a.vy *= -1;
+    if (a.x < ASTEROID_RADIUS || a.x > viewWidth - ASTEROID_RADIUS) a.vx *= -1;
+    if (a.y < ASTEROID_RADIUS || a.y > viewHeight - ASTEROID_RADIUS) a.vy *= -1;
   });
 
   // 惑星衝突
@@ -278,9 +287,15 @@ function update() {
       const a = asteroids[i];
       const b = asteroids[j];
       if (!a.alive || !b.alive) continue;
-      if (Math.hypot(a.x - b.x, a.y - b.y) < a.radius + b.radius) {
+
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+      if (Math.hypot(dx, dy) < ASTEROID_RADIUS * 2) {
         a.alive = false;
         b.alive = false;
+
+        createParticles(a.x, a.y);
+        createParticles(b.x, b.y);
 
         sounds.collision.currentTime = 0;
         sounds.collision.play();
@@ -292,18 +307,25 @@ function update() {
     }
   }
 
+  // パーティクル更新
+  particles.forEach((p, idx) => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+    if (p.life <= 0) particles.splice(idx, 1);
+  });
+
   // 全消しで自動再描画
   if (asteroids.every(a => !a.alive) && !waitingNext) {
     waitingNext = true;
+    sounds.stageclear.currentTime = 0;
+    sounds.stageclear.play();
 
     setTimeout(() => {
-      sounds.stageclear.currentTime = 0;
-      sounds.stageclear.play();
-
       createAsteroids();
       waitingNext = false;
       timeLeft = TIME_LIMIT;
-    }, 10);
+    }, 700);
   }
 }
 
@@ -341,20 +363,23 @@ function draw() {
   });
   ctx.shadowBlur = 0;
 
-  // 惑星描画（回転付き）
+  // 惑星描画
   asteroids.forEach(a => {
-    if (!a.alive || !a.img.complete) return;
+    if (!a.alive) return;
     ctx.save();
     ctx.translate(a.x, a.y);
     ctx.rotate(a.angle);
-    ctx.drawImage(
-      a.img,
-      -a.radius,
-      -a.radius,
-      a.radius * 2,
-      a.radius * 2
-    );
+    const imgSize = ASTEROID_RADIUS * 2 * IMAGE_SCALE;
+    ctx.drawImage(a.img, -imgSize/2, -imgSize/2, imgSize, imgSize);
     ctx.restore();
+  });
+
+  // パーティクル描画
+  particles.forEach(p => {
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2);
+    ctx.fill();
   });
 
   // タイトル
@@ -417,9 +442,7 @@ loop();
 // ==========================
 // スタート
 // ==========================
-startBtn.disabled = true;
 startBtn.addEventListener("click", () => {
-  if (imagesLoaded < ASTEROID_IMAGE_COUNT) return;
   gameState = "playing";
   startBtn.style.display = "none";
   infoBtn.style.display = "none";
@@ -434,6 +457,7 @@ startBtn.addEventListener("click", () => {
 infoBtn.addEventListener("click", () => {
   infoModal.style.display = "flex";
 });
+
 closeInfo.addEventListener("click", () => {
   infoModal.style.display = "none";
 });
