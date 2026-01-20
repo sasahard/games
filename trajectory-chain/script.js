@@ -89,8 +89,7 @@ let waitingNext = false;
 let gameState = "title"; // title / playing
 let score = 0;
 let highScore = 0;
-let currentShotCollisions = 0; // 現ショット衝突数
-let accumulatedBonus = 0;      // 全消し持越し用
+let currentShotCollisions = 0;
 let timeLeft = GAME_TIME;
 
 // ==========================
@@ -107,7 +106,7 @@ function createAsteroids(isFullReset = false) {
   asteroids = [];
   if (isFullReset) shotsLeft = MAX_SHOTS;
   waitingNext = false;
-  if (isFullReset) currentShotCollisions = 0;
+  currentShotCollisions = 0;
 
   while (asteroids.length < ASTEROID_COUNT) {
     const x = Math.random() * (viewWidth - 100) + 50;
@@ -121,7 +120,7 @@ function createAsteroids(isFullReset = false) {
     asteroids.push({ x, y, vx: 0, vy: 0, alive: true });
   }
 
-  if (isFullReset) timeLeft = GAME_TIME; // フルリセット時のみタイマーリセット
+  if (isFullReset) timeLeft = GAME_TIME; 
 }
 
 // ==========================
@@ -132,7 +131,6 @@ canvas.addEventListener("pointerdown", e => {
   drawing = true;
   trajectory = [{ x: e.clientX, y: e.clientY }];
   currentShotCollisions = 0; // 新ショットでボーナスリセット
-  accumulatedBonus = 0;       // ただし全消し持越し中でない場合のみ
 });
 
 canvas.addEventListener("pointermove", e => {
@@ -206,7 +204,7 @@ function update() {
 
   if (gameState !== "playing") return;
 
-  // タイマー更新
+  // タイマー更新（固定フォント）
   timeLeft -= 1/60;
   if (timeLeft <= 0) {
     messageEl.textContent = "GAMEOVER";
@@ -238,23 +236,22 @@ function update() {
 
         currentShotCollisions++;
         const bonusMultiplier = Math.pow(1.5, currentShotCollisions - 1);
-        accumulatedBonus += Math.round(10 * bonusMultiplier);
         score += Math.round(10 * bonusMultiplier);
       }
     }
   }
 
-  // 全消しで自動再描画（ボーナス持越し）
+  // 全消しで次ステージ生成（指数ボーナスリセット）
   if (asteroids.every(a => !a.alive) && !waitingNext) {
     waitingNext = true;
     setTimeout(() => {
-      createAsteroids(false); // フルリセットせず、ボーナス持越し
-      currentShotCollisions = 0; // 新ステージ開始時に指数はリセット（次衝突から再計算）
+      createAsteroids(false);
+      currentShotCollisions = 0; 
       waitingNext = false;
     }, 700);
   }
 
-  shotsEl.textContent = `shots: ${shotsLeft}`;
+  shotsEl.textContent = `SHOTS: ${shotsLeft}`;
 }
 
 // ==========================
@@ -328,14 +325,12 @@ function draw() {
   ctx.fillStyle = "white";
   ctx.fillText(`SHOTS: ${shotsLeft}`, 20, 16);
 
-  // TIME 中央上
+  // TIME 中央上（固定フォント）
   ctx.textAlign = "center";
-  if (gameState === "playing") {
-    const minutes = Math.floor(timeLeft / 60);
-    const seconds = Math.floor(timeLeft % 60).toString().padStart(2, "0");
-    const milliseconds = Math.floor((timeLeft % 1) * 100).toString().padStart(2, "0");
-    ctx.fillText(`TIME: ${minutes}:${seconds}.${milliseconds}`, viewWidth / 2, 16);
-  }
+  const minutes = Math.floor(timeLeft / 60);
+  const seconds = Math.floor(timeLeft % 60).toString().padStart(2, "0");
+  const milliseconds = Math.floor((timeLeft % 1) * 100).toString().padStart(2, "0");
+  ctx.fillText(`TIME: ${minutes}:${seconds}.${milliseconds}`, viewWidth / 2, 16);
 
   // SCORE / HIGH SCORE 右上
   ctx.textAlign = "right";
@@ -363,7 +358,6 @@ startBtn.addEventListener("click", () => {
   gameState = "playing";
   startBtn.style.display = "none";
   messageEl.textContent = "";
-  createAsteroids(true); // フルリセット
+  createAsteroids(true);
   currentShotCollisions = 0;
-  accumulatedBonus = 0;
 });
