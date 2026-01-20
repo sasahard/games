@@ -71,7 +71,7 @@ function createStars() {
       glow: Math.random() * 5 + 4,
       speed: Math.random() * 0.03 + 0.01,
       twinklePhase: Math.random() * Math.PI * 2,
-      colorOffset: Math.random() * 30 - 15
+      colorOffset: Math.random() * 30 - 15 // 色温度少しランダム
     });
   }
 }
@@ -86,10 +86,8 @@ let trajectory = [];
 let drawing = false;
 let waitingNext = false;
 let gameState = "title"; // title / playing
-
-let score = 0;         // 累計スコア
-let shotScore = 0;     // 現ショットの加算ポイント
-let bonusMultiplier = 1; // ボーナス係数
+let score = 0;
+let currentShotCollisions = 0; // 1ショット内の衝突数
 
 const shotsEl = document.getElementById("shots");
 const messageEl = document.getElementById("message");
@@ -102,8 +100,7 @@ function createAsteroids() {
   asteroids = [];
   shotsLeft = MAX_SHOTS;
   waitingNext = false;
-  shotScore = 0;
-  bonusMultiplier = 1;
+  currentShotCollisions = 0;
 
   while (asteroids.length < ASTEROID_COUNT) {
     const x = Math.random() * (viewWidth - 100) + 50;
@@ -130,6 +127,7 @@ canvas.addEventListener("pointerdown", e => {
   if (gameState !== "playing" || shotsLeft <= 0) return;
   drawing = true;
   trajectory = [{ x: e.clientX, y: e.clientY }];
+  currentShotCollisions = 0; // 新しいショット開始でボーナスリセット
 });
 
 canvas.addEventListener("pointermove", e => {
@@ -143,9 +141,6 @@ canvas.addEventListener("pointerup", () => {
   applyTrajectoryForce();
   trajectory = [];
   shotsLeft--;
-  // 次ショットでボーナスリセット
-  shotScore = 0;
-  bonusMultiplier = 1;
 });
 
 // ==========================
@@ -226,11 +221,10 @@ function update() {
         a.alive = false;
         b.alive = false;
 
-        // SCORE加算
-        const points = 10 * bonusMultiplier;
-        shotScore += points;
-        score += points;
-        bonusMultiplier += 0.5; // ボーナス増加
+        // ===== スコア加算（指数関数型ボーナス） =====
+        currentShotCollisions++;
+        const bonusMultiplier = Math.pow(1.5, currentShotCollisions - 1);
+        score += Math.round(10 * bonusMultiplier);
       }
     }
   }
@@ -293,11 +287,11 @@ function draw() {
   // タイトル（タイトル状態のみ）
   if (gameState === "title") {
     const text = "Trajectory Chain";
-    ctx.font = "bold 48px 'Orbitron', sans-serif"; // サイズ調整
+    ctx.font = "bold 56px 'Orbitron', sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
-    // ライトセーバー風グロー
+    // 光グロー（ライトセーバー風）
     for (let i = 5; i > 0; i--) {
       ctx.shadowBlur = i * 12;
       ctx.shadowColor = `rgba(150,200,255,${0.05 * i})`;
@@ -307,18 +301,17 @@ function draw() {
     ctx.shadowBlur = 0;
   }
 
-  // UI表示
-  // SHOTS 左上
-  shotsEl.style.top = "16px";
-  shotsEl.style.left = "20px";
-  shotsEl.textContent = `shots: ${shotsLeft}`;
-
-  // SCORE / HIGH SCORE 右上
-  const scoreText = gameState === "title" ? `HIGH SCORE: ${Math.floor(score)}` : `SCORE: ${Math.floor(score)}`;
+  // SCORE / HIGH SCORE
   ctx.font = "13px 'Orbitron', sans-serif";
   ctx.textAlign = "right";
-  ctx.fillStyle = "white";
-  ctx.fillText(scoreText, viewWidth - 20, 16);
+  ctx.textBaseline = "top";
+  if (gameState === "title") {
+    ctx.fillStyle = "white";
+    ctx.fillText(`HIGH SCORE: ${score}`, viewWidth - 20, 16);
+  } else {
+    ctx.fillStyle = "white";
+    ctx.fillText(`SCORE: ${score}`, viewWidth - 20, 16);
+  }
 }
 
 // ==========================
@@ -339,6 +332,5 @@ startBtn.addEventListener("click", () => {
   startBtn.style.display = "none";
   messageEl.textContent = "";
   createAsteroids();
-  shotScore = 0;
-  bonusMultiplier = 1;
+  currentShotCollisions = 0; // スタートでボーナスリセット
 });
