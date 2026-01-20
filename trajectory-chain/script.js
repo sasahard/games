@@ -25,8 +25,8 @@ resize();
 // 定数
 // ==========================
 const ASTEROID_COUNT = 10;
-const ASTEROID_RADIUS = 12;
-const ASTEROID_SCALE = 1.5; // 画像拡大倍率
+const ASTEROID_RADIUS = 12; // 元サイズ
+const ASTEROID_SCALE = 1.5; // 描画と判定に適用
 const MAX_SHOTS = 5;
 const FORCE_RADIUS = 140;
 const FORCE_POWER = 6;
@@ -42,12 +42,13 @@ const sounds = {
 };
 
 // ==========================
-// 小惑星画像
+// 惑星画像
 // ==========================
+const ASTEROID_IMAGE_COUNT = 5;
 const asteroidImages = [];
-for (let i = 1; i <= 5; i++) {
+for (let i = 1; i <= ASTEROID_IMAGE_COUNT; i++) {
   const img = new Image();
-  img.src = `images/asteroid${i}.png`;
+  img.src = `images/planet${i}.png`;
   asteroidImages.push(img);
 }
 
@@ -133,17 +134,11 @@ function createAsteroids() {
   while (asteroids.length < ASTEROID_COUNT) {
     const x = Math.random() * (viewWidth - 100) + 50;
     const y = Math.random() * (viewHeight - 100) + 50;
-    const overlap = asteroids.some(a => Math.hypot(a.x - x, a.y - y) < ASTEROID_RADIUS * 2.5);
+    const overlap = asteroids.some(a => Math.hypot(a.x - x, a.y - y) < ASTEROID_RADIUS * 2 * ASTEROID_SCALE * 1.5);
     if (overlap) continue;
 
-    asteroids.push({
-      x,
-      y,
-      vx: 0,
-      vy: 0,
-      alive: true,
-      img: asteroidImages[Math.floor(Math.random() * asteroidImages.length)]
-    });
+    const img = asteroidImages[Math.floor(Math.random() * asteroidImages.length)];
+    asteroids.push({ x, y, vx: 0, vy: 0, alive: true, img });
   }
 }
 
@@ -235,12 +230,10 @@ function update() {
       timeLeft = 0;
       timerActive = false;
       messageEl.textContent = "GAME OVER";
-
-      // 全惑星消去
-      asteroids.forEach(a => a.alive = false);
-
       sounds.gameover.currentTime = 0;
       sounds.gameover.play();
+
+      asteroids.forEach(a => a.alive = false); // GAME OVERで惑星消す
 
       setTimeout(() => {
         gameState = "title";
@@ -259,8 +252,8 @@ function update() {
     a.x += a.vx;
     a.y += a.vy;
 
-    if (a.x < ASTEROID_RADIUS || a.x > viewWidth - ASTEROID_RADIUS) a.vx *= -1;
-    if (a.y < ASTEROID_RADIUS || a.y > viewHeight - ASTEROID_RADIUS) a.vy *= -1;
+    if (a.x < ASTEROID_RADIUS * ASTEROID_SCALE || a.x > viewWidth - ASTEROID_RADIUS * ASTEROID_SCALE) a.vx *= -1;
+    if (a.y < ASTEROID_RADIUS * ASTEROID_SCALE || a.y > viewHeight - ASTEROID_RADIUS * ASTEROID_SCALE) a.vy *= -1;
   });
 
   // 惑星衝突
@@ -269,7 +262,7 @@ function update() {
       const a = asteroids[i];
       const b = asteroids[j];
       if (!a.alive || !b.alive) continue;
-      if (Math.hypot(a.x - b.x, a.y - b.y) < ASTEROID_RADIUS * 2) {
+      if (Math.hypot(a.x - b.x, a.y - b.y) < ASTEROID_RADIUS * 2 * ASTEROID_SCALE) {
         a.alive = false;
         b.alive = false;
 
@@ -284,7 +277,7 @@ function update() {
   }
 
   // 全消しで自動再描画
-  if (asteroids.every(a => !a.alive) && !waitingNext && gameState === "playing") {
+  if (asteroids.every(a => !a.alive) && !waitingNext) {
     waitingNext = true;
 
     setTimeout(() => {
@@ -294,7 +287,7 @@ function update() {
       createAsteroids();
       waitingNext = false;
       timeLeft = TIME_LIMIT;
-    }, 100);
+    }, 10);
   }
 }
 
@@ -330,11 +323,16 @@ function draw() {
   });
   ctx.shadowBlur = 0;
 
-  // 小惑星描画（画像対応・拡大1.5倍）
+  // 惑星描画
   asteroids.forEach(a => {
-    if (!a.alive || !a.img.complete) return;
-    const size = ASTEROID_RADIUS * 2 * ASTEROID_SCALE;
-    ctx.drawImage(a.img, a.x - size/2, a.y - size/2, size, size);
+    if (!a.alive) return;
+    ctx.drawImage(
+      a.img,
+      a.x - ASTEROID_RADIUS * ASTEROID_SCALE,
+      a.y - ASTEROID_RADIUS * ASTEROID_SCALE,
+      ASTEROID_RADIUS * 2 * ASTEROID_SCALE,
+      ASTEROID_RADIUS * 2 * ASTEROID_SCALE
+    );
   });
 
   // タイトル
