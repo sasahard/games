@@ -36,8 +36,8 @@ const TIME_LIMIT = 60; // 秒
 // ==========================
 const sounds = {
   collision: new Audio("sounds/collision.wav"),
-  gameover: new Audio("sounds/gameover.wav"),
-  stageclear: new Audio("sounds/stageclear.wav")
+  stageclear: new Audio("sounds/clear.wav"),
+  gameover: new Audio("sounds/gameover.wav")
 };
 
 // ==========================
@@ -136,7 +136,7 @@ canvas.addEventListener("pointerdown", e => {
   if (gameState !== "playing" || shotsLeft <= 0) return;
   drawing = true;
   trajectory = [{ x: e.clientX, y: e.clientY }];
-  currentShotCollisions = 0; // 新しいショット開始でボーナスリセット
+  currentShotCollisions = 0;
 });
 
 canvas.addEventListener("pointermove", e => {
@@ -217,11 +217,10 @@ function update() {
       timeLeft = 0;
       timerActive = false;
       messageEl.textContent = "GAME OVER";
+      sounds.gameover.currentTime = 0;
+      sounds.gameover.play();
 
-      // 惑星を全て消す
       asteroids.forEach(a => a.alive = false);
-
-      sounds.gameover.play(); // GAME OVER 音
 
       setTimeout(() => {
         gameState = "title";
@@ -253,11 +252,13 @@ function update() {
       if (Math.hypot(a.x - b.x, a.y - b.y) < ASTEROID_RADIUS * 2) {
         a.alive = false;
         b.alive = false;
+
+        sounds.collision.currentTime = 0;
+        sounds.collision.play();
+
         currentShotCollisions++;
         const bonusMultiplier = Math.pow(1.5, currentShotCollisions - 1);
         score += Math.round(10 * bonusMultiplier);
-
-        sounds.collision.play(); // 衝突音
       }
     }
   }
@@ -265,12 +266,15 @@ function update() {
   // 全消しで自動再描画
   if (asteroids.every(a => !a.alive) && !waitingNext) {
     waitingNext = true;
-    sounds.stageclear.play(); // ステージクリア音
+
     setTimeout(() => {
+      sounds.stageclear.currentTime = 0;
+      sounds.stageclear.play();
+
       createAsteroids();
       waitingNext = false;
-      timeLeft = TIME_LIMIT; // タイマーリセット
-    }, 700);
+      timeLeft = TIME_LIMIT;
+    }, 10);
   }
 }
 
