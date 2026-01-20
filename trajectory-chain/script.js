@@ -26,6 +26,7 @@ resize();
 // ==========================
 const ASTEROID_COUNT = 10;
 const ASTEROID_RADIUS = 12;
+const ASTEROID_SCALE = 1.5; // 画像拡大倍率
 const MAX_SHOTS = 5;
 const FORCE_RADIUS = 140;
 const FORCE_POWER = 6;
@@ -234,10 +235,12 @@ function update() {
       timeLeft = 0;
       timerActive = false;
       messageEl.textContent = "GAME OVER";
+
+      // 全惑星消去
+      asteroids.forEach(a => a.alive = false);
+
       sounds.gameover.currentTime = 0;
       sounds.gameover.play();
-
-      asteroids.forEach(a => a.alive = false);
 
       setTimeout(() => {
         gameState = "title";
@@ -281,7 +284,7 @@ function update() {
   }
 
   // 全消しで自動再描画
-  if (asteroids.every(a => !a.alive) && !waitingNext) {
+  if (asteroids.every(a => !a.alive) && !waitingNext && gameState === "playing") {
     waitingNext = true;
 
     setTimeout(() => {
@@ -291,7 +294,7 @@ function update() {
       createAsteroids();
       waitingNext = false;
       timeLeft = TIME_LIMIT;
-    }, 10);
+    }, 100);
   }
 }
 
@@ -327,10 +330,11 @@ function draw() {
   });
   ctx.shadowBlur = 0;
 
-  // 小惑星描画（画像対応）
+  // 小惑星描画（画像対応・拡大1.5倍）
   asteroids.forEach(a => {
-    if (!a.alive || !a.img.complete) return; // 画像未ロード時は描画しない
-    ctx.drawImage(a.img, a.x - ASTEROID_RADIUS, a.y - ASTEROID_RADIUS, ASTEROID_RADIUS * 2, ASTEROID_RADIUS * 2);
+    if (!a.alive || !a.img.complete) return;
+    const size = ASTEROID_RADIUS * 2 * ASTEROID_SCALE;
+    ctx.drawImage(a.img, a.x - size/2, a.y - size/2, size, size);
   });
 
   // タイトル
