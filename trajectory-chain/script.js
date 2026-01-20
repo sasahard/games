@@ -35,10 +35,9 @@ const TIME_LIMIT = 60; // 秒
 // 効果音
 // ==========================
 const sounds = {
-  shot: new Audio("sounds/shot.wav"),
   collision: new Audio("sounds/collision.wav"),
   gameover: new Audio("sounds/gameover.wav"),
-  clear: new Audio("sounds/clear.wav")
+  stageclear: new Audio("sounds/stageclear.wav")
 };
 
 // ==========================
@@ -151,10 +150,6 @@ canvas.addEventListener("pointerup", () => {
   applyTrajectoryForce();
   trajectory = [];
   shotsLeft--;
-
-  // 効果音再生
-  sounds.shot.currentTime = 0;
-  sounds.shot.play();
 });
 
 // ==========================
@@ -223,9 +218,10 @@ function update() {
       timerActive = false;
       messageEl.textContent = "GAME OVER";
 
-      // 効果音
-      sounds.gameover.currentTime = 0;
-      sounds.gameover.play();
+      // 惑星を全て消す
+      asteroids.forEach(a => a.alive = false);
+
+      sounds.gameover.play(); // GAME OVER 音
 
       setTimeout(() => {
         gameState = "title";
@@ -261,9 +257,7 @@ function update() {
         const bonusMultiplier = Math.pow(1.5, currentShotCollisions - 1);
         score += Math.round(10 * bonusMultiplier);
 
-        // 効果音
-        sounds.collision.currentTime = 0;
-        sounds.collision.play();
+        sounds.collision.play(); // 衝突音
       }
     }
   }
@@ -271,11 +265,7 @@ function update() {
   // 全消しで自動再描画
   if (asteroids.every(a => !a.alive) && !waitingNext) {
     waitingNext = true;
-
-    // 効果音
-    sounds.clear.currentTime = 0;
-    sounds.clear.play();
-
+    sounds.stageclear.play(); // ステージクリア音
     setTimeout(() => {
       createAsteroids();
       waitingNext = false;
@@ -386,13 +376,11 @@ loop();
 // ==========================
 startBtn.addEventListener("click", () => {
   gameState = "playing";
-  startBtn.style.display = "inline-block";
-  infoBtn.style.display = "inline-block";
+  startBtn.style.display = "none";
+  infoBtn.style.display = "none";
   messageEl.textContent = "";
   createAsteroids();
   currentShotCollisions = 0;
-  startBtn.style.display = "none";
-  infoBtn.style.display = "none";
 });
 
 // ==========================
