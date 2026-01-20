@@ -28,7 +28,7 @@ html, body {
 #ui {
   position: fixed;
   inset: 0;
-  pointer-events: none;
+  pointer-events: none; /* 子要素で個別に auto に */
 }
 
 #shots {
@@ -49,6 +49,7 @@ html, body {
   letter-spacing: 0.15em;
 }
 
+/* STARTボタン */
 #startBtn {
   position: absolute;
   top: 55%;
@@ -57,6 +58,8 @@ html, body {
   padding: 12px 34px;
   font-size: 16px;
   letter-spacing: 0.2em;
+  width: 180px; /* 横幅を固定 */
+  text-align: center;
 
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.4);
@@ -79,12 +82,14 @@ html, body {
   padding: 12px 34px;
   font-size: 16px;
   letter-spacing: 0.2em;
+  width: 180px; /* STARTボタンと同じ横幅 */
+  text-align: center;
 
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.4);
   color: white;
 
-  pointer-events: auto;
+  pointer-events: auto; /* クリックできるように */
   cursor: pointer;
 }
 
@@ -94,6 +99,6 @@ html, body {
 
 @media (max-width: 600px) {
   #message { font-size: 22px; }
-  #startBtn { font-size: 14px; }
-  #infoBtn { font-size: 14px; top: calc(55% + 50px); }
+  #startBtn { font-size: 14px; width: 140px; }
+  #infoBtn { font-size: 14px; width: 140px; top: calc(55% + 50px); }
 }
