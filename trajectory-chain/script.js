@@ -26,13 +26,14 @@ resize();
 // ==========================
 const ASTEROID_COUNT = 10;
 const ASTEROID_RADIUS = 12;
-const ASTEROID_SCALE = 1.5;
+const ASTEROID_SCALE = 1.5; // 画像表示倍率
 const MAX_SHOTS = 5;
 const FORCE_RADIUS = 140;
 const FORCE_POWER = 6;
-const TIME_LIMIT = 60;
+const TIME_LIMIT = 60; // 秒
 const ASTEROID_IMAGE_COUNT = 5;
-const PARTICLE_COUNT = 12; // 衝突粒子の数
+
+const PARTICLE_COUNT = 12; // 衝突粒子数
 
 // ==========================
 // 効果音
@@ -101,7 +102,7 @@ let currentShotCollisions = 0;
 let highScore = 0;
 let timeLeft = TIME_LIMIT;
 let timerActive = false;
-let particles = []; // 衝突粒子
+const particles = [];
 
 const shotsEl = document.getElementById("shots");
 const messageEl = document.getElementById("message");
@@ -120,7 +121,9 @@ for (let i = 1; i <= ASTEROID_IMAGE_COUNT; i++) {
   img.src = `images/asteroid${i}.png`;
   img.onload = () => {
     imagesLoaded++;
-    if (imagesLoaded === ASTEROID_IMAGE_COUNT) startBtn.disabled = false;
+    if (imagesLoaded === ASTEROID_IMAGE_COUNT) {
+      startBtn.disabled = false;
+    }
   };
   asteroidImages.push(img);
 }
@@ -135,7 +138,6 @@ function createAsteroids() {
   currentShotCollisions = 0;
   timeLeft = TIME_LIMIT;
   timerActive = true;
-  particles = [];
 
   while (asteroids.length < ASTEROID_COUNT) {
     const x = Math.random() * (viewWidth - 100) + 50;
@@ -186,28 +188,50 @@ canvas.addEventListener("pointerup", () => {
 // ==========================
 function applyTrajectoryForce() {
   if (trajectory.length < 2) return;
+
   const s = trajectory[0];
   const e = trajectory[trajectory.length - 1];
   const dx = e.x - s.x;
   const dy = e.y - s.y;
   const len = Math.hypot(dx, dy);
   if (len === 0) return;
+
   const nx = dx / len;
   const ny = dy / len;
 
   asteroids.forEach(a => {
     if (!a.alive) return;
+
     let min = Infinity;
     trajectory.forEach(p => {
       const d = Math.hypot(a.x - p.x, a.y - p.y);
       if (d < min) min = d;
     });
+
     if (min < FORCE_RADIUS) {
       const f = (FORCE_RADIUS - min) / FORCE_RADIUS;
       a.vx += nx * f * FORCE_POWER;
       a.vy += ny * f * FORCE_POWER;
     }
   });
+}
+
+// ==========================
+// 粒子生成（小惑星衝突時）
+function createParticlesFromAsteroid(a) {
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 1 + 0.5; // 飛距離控えめ
+    particles.push({
+      x: a.x,
+      y: a.y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      alpha: 1,
+      radius: Math.random() * 1.5 + 1, // 背景星よりやや大きめ
+      color: `rgba(255,${Math.floor(Math.random()*200+55)},0,1)`
+    });
+  }
 }
 
 // ==========================
@@ -246,7 +270,6 @@ function update() {
       sounds.gameover.play();
 
       asteroids.forEach(a => a.alive = false);
-      createParticlesFromAllAsteroids();
 
       setTimeout(() => {
         gameState = "title";
@@ -280,11 +303,11 @@ function update() {
         a.alive = false;
         b.alive = false;
 
-        sounds.collision.currentTime = 0;
-        sounds.collision.play();
-
         createParticlesFromAsteroid(a);
         createParticlesFromAsteroid(b);
+
+        sounds.collision.currentTime = 0;
+        sounds.collision.play();
 
         currentShotCollisions++;
         const bonusMultiplier = Math.pow(1.5, currentShotCollisions - 1);
@@ -294,16 +317,19 @@ function update() {
   }
 
   // 粒子更新
-  particles.forEach((p, idx) => {
+  particles.forEach(p => {
     p.x += p.vx;
     p.y += p.vy;
     p.alpha -= 0.02;
-    if (p.alpha <= 0) particles.splice(idx, 1);
   });
+  for (let i = particles.length - 1; i >= 0; i--) {
+    if (particles[i].alpha <= 0) particles.splice(i, 1);
+  }
 
   // 全消しで自動再描画
   if (asteroids.every(a => !a.alive) && !waitingNext) {
     waitingNext = true;
+
     setTimeout(() => {
       sounds.stageclear.currentTime = 0;
       sounds.stageclear.play();
@@ -313,31 +339,6 @@ function update() {
       timeLeft = TIME_LIMIT;
     }, 10);
   }
-}
-
-// ==========================
-// 粒子生成関数
-// ==========================
-function createParticlesFromAsteroid(a) {
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = Math.random() * 3 + 1;
-    particles.push({
-      x: a.x,
-      y: a.y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      alpha: 1,
-      radius: Math.random() * 4 + 2,
-      color: `rgba(255,${Math.floor(Math.random()*200+55)},0,1)`
-    });
-  }
-}
-
-function createParticlesFromAllAsteroids() {
-  asteroids.forEach(a => {
-    if (a.alive) createParticlesFromAsteroid(a);
-  });
 }
 
 // ==========================
@@ -374,21 +375,27 @@ function draw() {
   });
   ctx.shadowBlur = 0;
 
-  // 惑星描画
+  // 惑星描画（回転付き）
   asteroids.forEach(a => {
     if (!a.alive || !a.img.complete) return;
     ctx.save();
     ctx.translate(a.x, a.y);
     ctx.rotate(a.angle);
-    ctx.drawImage(a.img, -a.radius, -a.radius, a.radius * 2, a.radius * 2);
+    ctx.drawImage(
+      a.img,
+      -a.radius,
+      -a.radius,
+      a.radius * 2,
+      a.radius * 2
+    );
     ctx.restore();
   });
 
   // 粒子描画
   particles.forEach(p => {
-    ctx.fillStyle = p.color;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2);
+    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+    ctx.fillStyle = p.color.replace(",1)", `,${p.alpha})`);
     ctx.fill();
   });
 
@@ -403,6 +410,7 @@ function draw() {
       fontSize = fontSize * maxWidth / textWidth;
       ctx.font = `bold ${fontSize}px 'Orbitron', sans-serif`;
     }
+
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     for (let i = 5; i > 0; i--) {
