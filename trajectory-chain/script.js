@@ -370,11 +370,16 @@ function draw() {
     ctx.fillRect(0, 0, viewWidth, viewHeight);
   }
 
+  // タイトル
   if (gameState === "title") {
-    ctx.font = "bold 56px 'Orbitron', sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillStyle = "white";
-    ctx.fillText("Trajectory Chain", viewWidth / 2, viewHeight / 2 - 20);
+    const text = "Trajectory Chain";
+    let fontSize = 56;
+    ctx.font = `bold ${fontSize}px 'Orbitron', sans-serif`;
+    let textWidth = ctx.measureText(text).width;
+    const maxWidth = viewWidth * 0.9;
+    if (textWidth > maxWidth) {
+      fontSize = fontSize * maxWidth / textWidth;
+      ctx.font = `bold ${fontSize}px 'Orbitron', sans-serif`;
   }
 
   ctx.font = "13px 'Orbitron',sans-serif";
