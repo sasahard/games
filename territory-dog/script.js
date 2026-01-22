@@ -1,41 +1,29 @@
-// ==========================
-// 定数定義
-// ==========================
 const SIZE = 10;
 const MAX_TURNS = 15;
 
-// マス状態
 const EMPTY = 0;
 const P1 = 1;
 const P2 = 2;
 const WEAK_P1 = 3;
 const WEAK_P2 = 4;
 
-// ==========================
-// 状態管理
-// ==========================
 let board = new Array(SIZE * SIZE).fill(EMPTY);
 let currentPlayer = P1;
-let turn = 1;
-let turnsLeft = {
-  [P1]: MAX_TURNS,
-  [P2]: MAX_TURNS,
-};
+let turnsLeft = { 1: MAX_TURNS, 2: MAX_TURNS };
 
 const boardEl = document.getElementById("board");
-const turnInfoEl = document.getElementById("turnInfo");
-const turnCountEl = document.getElementById("turnCount");
+const playerAEl = document.getElementById("playerA");
+const playerBEl = document.getElementById("playerB");
+const countAEl = document.getElementById("countA");
+const countBEl = document.getElementById("countB");
 const resultEl = document.getElementById("result");
 
-// ==========================
-// 初期化
-// ==========================
 function init() {
   boardEl.innerHTML = "";
-  board.forEach((_, index) => {
+  board.forEach((_, i) => {
     const cell = document.createElement("div");
     cell.className = "cell";
-    cell.addEventListener("click", () => handleClick(index));
+    cell.onclick = () => handleClick(i);
     boardEl.appendChild(cell);
   });
   updateUI();
@@ -44,39 +32,68 @@ function init() {
 init();
 
 // ==========================
-// クリック処理
+// クリック処理（十字マーキング）
 // ==========================
 function handleClick(index) {
   if (isGameOver()) return;
 
-  const state = board[index];
+  const targets = getCrossIndexes(index);
 
-  // マーキングルール
-  if (state === EMPTY) {
-    board[index] = currentPlayer;
-  } else if (state === opponentTerritory()) {
-    board[index] = opponentWeak();
-  } else if (state === currentWeak()) {
-    board[index] = currentPlayer;
-  } else {
-    return; // それ以外は何も起きない
-  }
+  let acted = false;
 
-  endTurn();
+  targets.forEach(i => {
+    if (applyMark(i)) acted = true;
+  });
+
+  if (!acted) return;
+
+  turnsLeft[currentPlayer]--;
+  currentPlayer = currentPlayer === P1 ? P2 : P1;
+  updateUI();
 }
 
 // ==========================
-// ターン終了処理
+// マーキング処理（1マス）
 // ==========================
-function endTurn() {
-  turnsLeft[currentPlayer]--;
+function applyMark(index) {
+  const state = board[index];
 
-  if (!isGameOver()) {
-    currentPlayer = currentPlayer === P1 ? P2 : P1;
-    turn++;
+  if (state === EMPTY) {
+    board[index] = currentPlayer;
+    return true;
   }
 
-  updateUI();
+  if (state === opponentTerritory()) {
+    board[index] = opponentWeak();
+    return true;
+  }
+
+  if (state === currentWeak()) {
+    board[index] = currentPlayer;
+    return true;
+  }
+
+  return false;
+}
+
+// ==========================
+// 上下左右のindex取得
+// ==========================
+function getCrossIndexes(index) {
+  const x = index % SIZE;
+  const y = Math.floor(index / SIZE);
+
+  const positions = [
+    { x, y },         // 中心
+    { x, y: y - 1 },  // 上
+    { x, y: y + 1 },  // 下
+    { x: x - 1, y },  // 左
+    { x: x + 1, y },  // 右
+  ];
+
+  return positions
+    .filter(p => p.x >= 0 && p.x < SIZE && p.y >= 0 && p.y < SIZE)
+    .map(p => p.y * SIZE + p.x);
 }
 
 // ==========================
@@ -87,38 +104,32 @@ function updateUI() {
 
   board.forEach((state, i) => {
     cells[i].className = "cell";
-
     if (state === P1) cells[i].classList.add("p1");
     if (state === P2) cells[i].classList.add("p2");
     if (state === WEAK_P1) cells[i].classList.add("p1", "weak");
     if (state === WEAK_P2) cells[i].classList.add("p2", "weak");
   });
 
-  turnInfoEl.textContent =
-    currentPlayer === P1 ? "プレイヤーAのターン" : "プレイヤーBのターン";
+  countAEl.textContent = `残り ${turnsLeft[P1]}`;
+  countBEl.textContent = `残り ${turnsLeft[P2]}`;
 
-  turnCountEl.textContent =
-    `A残り:${turnsLeft[P1]} / B残り:${turnsLeft[P2]}`;
+  playerAEl.classList.toggle("active", currentPlayer === P1);
+  playerBEl.classList.toggle("active", currentPlayer === P2);
 
-  if (isGameOver()) {
-    showResult();
-  }
+  if (isGameOver()) showResult();
 }
 
 // ==========================
-// 勝敗判定
+// 勝敗
 // ==========================
 function showResult() {
-  const p1Count = board.filter(v => v === P1).length;
-  const p2Count = board.filter(v => v === P2).length;
+  const a = board.filter(v => v === P1).length;
+  const b = board.filter(v => v === P2).length;
 
-  if (p1Count > p2Count) {
-    resultEl.textContent = "プレイヤーAの勝利！";
-  } else if (p2Count > p1Count) {
-    resultEl.textContent = "プレイヤーBの勝利！";
-  } else {
-    resultEl.textContent = "引き分け！";
-  }
+  resultEl.textContent =
+    a > b ? "Player A Win" :
+    b > a ? "Player B Win" :
+    "Draw";
 }
 
 // ==========================
@@ -127,15 +138,12 @@ function showResult() {
 function opponentTerritory() {
   return currentPlayer === P1 ? P2 : P1;
 }
-
 function opponentWeak() {
   return currentPlayer === P1 ? WEAK_P2 : WEAK_P1;
 }
-
 function currentWeak() {
   return currentPlayer === P1 ? WEAK_P1 : WEAK_P2;
 }
-
 function isGameOver() {
   return turnsLeft[P1] === 0 && turnsLeft[P2] === 0;
 }
