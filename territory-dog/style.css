@@ -1,15 +1,9 @@
-/* 全体レイアウト */
 body {
   font-family: system-ui, sans-serif;
-  text-align: center;
   background: #f4f4f4;
   margin: 0;
-  padding: 16px;
-}
-
-/* 情報表示 */
-#info {
-  margin-bottom: 12px;
+  padding-bottom: 80px; /* 下部UI分 */
+  text-align: center;
 }
 
 /* 盤面 */
@@ -18,34 +12,60 @@ body {
   grid-template-columns: repeat(10, 1fr);
   gap: 4px;
   max-width: 90vw;
-  margin: 0 auto 16px;
+  margin: 16px auto;
 }
 
-/* マス共通 */
+/* マス */
 .cell {
   aspect-ratio: 1 / 1;
   background: #ddd;
-  cursor: pointer;
   border-radius: 4px;
+  cursor: pointer;
 }
 
-/* プレイヤーA */
-.cell.p1 {
-  background: #4a90e2;
+.cell.p1 { background: #4a90e2; }
+.cell.p2 { background: #e94a4a; }
+.cell.weak { opacity: 0.5; }
+
+/* 下部INFO */
+#info {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 64px;
+  display: flex;
+  background: #222;
+  color: #fff;
 }
 
-/* プレイヤーB */
-.cell.p2 {
-  background: #e94a4a;
+/* プレイヤー表示 */
+.player {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  opacity: 0.4;
+  transition: opacity 0.2s, background 0.2s;
 }
 
-/* 弱体化状態 */
-.cell.weak {
-  opacity: 0.5;
+.player.active {
+  opacity: 1;
 }
 
-/* 結果表示 */
+#playerA.active { background: #4a90e2; }
+#playerB.active { background: #e94a4a; }
+
+.label {
+  font-size: 0.9em;
+}
+
+.count {
+  font-size: 0.8em;
+}
+
+/* 結果 */
 #result {
-  font-size: 1.2em;
   font-weight: bold;
+  margin-bottom: 72px;
 }
