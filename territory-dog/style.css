@@ -34,6 +34,9 @@ body {
   border-radius: 4px;
   cursor: pointer;
   transition: transform 0.05s;
+
+  /* ★重要：outline表示のため */
+  box-sizing: border-box;
 }
 
 .cell:active {
@@ -50,6 +53,13 @@ body {
 
 .cell.weak {
   opacity: 0.5;
+}
+
+/* ★ クールダウン（点線枠） */
+.cell.cooldown {
+  outline: 2px dashed rgba(255, 255, 255, 0.7);
+  outline-offset: -2px;
+  cursor: not-allowed;
 }
 
 /* ==========================
