@@ -1,0 +1,51 @@
+/* 全体レイアウト */
+body {
+  font-family: system-ui, sans-serif;
+  text-align: center;
+  background: #f4f4f4;
+  margin: 0;
+  padding: 16px;
+}
+
+/* 情報表示 */
+#info {
+  margin-bottom: 12px;
+}
+
+/* 盤面 */
+#board {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+  max-width: 90vw;
+  margin: 0 auto 16px;
+}
+
+/* マス共通 */
+.cell {
+  aspect-ratio: 1 / 1;
+  background: #ddd;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+/* プレイヤーA */
+.cell.p1 {
+  background: #4a90e2;
+}
+
+/* プレイヤーB */
+.cell.p2 {
+  background: #e94a4a;
+}
+
+/* 弱体化状態 */
+.cell.weak {
+  opacity: 0.5;
+}
+
+/* 結果表示 */
+#result {
+  font-size: 1.2em;
+  font-weight: bold;
+}
