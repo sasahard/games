@@ -10,6 +10,8 @@ const P2 = 2;
 const WEAK_P1 = 3;
 const WEAK_P2 = 4;
 
+const COOLDOWN_CLASS = "cooldown";
+
 // ==========================
 // 状態
 // ==========================
@@ -19,6 +21,10 @@ let turnsLeft = {
   [P1]: MAX_TURNS,
   [P2]: MAX_TURNS,
 };
+
+// クールダウン管理
+let cooldownIndexes = [];
+let cooldownOwner = null;
 
 // ==========================
 // DOM
@@ -54,6 +60,9 @@ init();
 function handleClick(index) {
   if (isGameOver()) return;
 
+  // クールダウン中は誰も触れない
+  if (cooldownIndexes.includes(index)) return;
+
   const targets = getCrossIndexes(index);
   let acted = false;
 
@@ -63,8 +72,11 @@ function handleClick(index) {
 
   if (!acted) return;
 
+  // クールダウン設定（このターンで影響した5マス）
+  setCooldown(targets);
+
   turnsLeft[currentPlayer]--;
-  currentPlayer = currentPlayer === P1 ? P2 : P1;
+  switchTurn();
 
   updateUI();
 }
@@ -75,19 +87,16 @@ function handleClick(index) {
 function applyMark(index) {
   const state = board[index];
 
-  // 空白 → 取得
   if (state === EMPTY) {
     board[index] = currentPlayer;
     return true;
   }
 
-  // 相手陣地 → 弱体化
   if (state === opponentTerritory()) {
     board[index] = opponentWeak();
     return true;
   }
 
-  // 相手の弱体化 → 奪取
   if (state === opponentWeak()) {
     board[index] = currentPlayer;
     return true;
@@ -104,11 +113,11 @@ function getCrossIndexes(index) {
   const y = Math.floor(index / SIZE);
 
   const positions = [
-    { x, y },         // 中心
-    { x, y: y - 1 },  // 上
-    { x, y: y + 1 },  // 下
-    { x: x - 1, y },  // 左
-    { x: x + 1, y },  // 右
+    { x, y },
+    { x, y: y - 1 },
+    { x, y: y + 1 },
+    { x: x - 1, y },
+    { x: x + 1, y },
   ];
 
   return positions
@@ -117,6 +126,32 @@ function getCrossIndexes(index) {
       p.y >= 0 && p.y < SIZE
     )
     .map(p => p.y * SIZE + p.x);
+}
+
+// ==========================
+// クールダウン制御
+// ==========================
+function setCooldown(indexes) {
+  clearCooldown();
+  cooldownIndexes = indexes;
+  cooldownOwner = currentPlayer;
+}
+
+function clearCooldown() {
+  cooldownIndexes = [];
+  cooldownOwner = null;
+}
+
+// ==========================
+// ターン切替
+// ==========================
+function switchTurn() {
+  currentPlayer = currentPlayer === P1 ? P2 : P1;
+
+  // 次の「自分の番」に戻ったらクールダウン解除
+  if (currentPlayer === cooldownOwner) {
+    clearCooldown();
+  }
 }
 
 // ==========================
@@ -132,6 +167,10 @@ function updateUI() {
     if (state === P2) cells[i].classList.add("p2");
     if (state === WEAK_P1) cells[i].classList.add("p1", "weak");
     if (state === WEAK_P2) cells[i].classList.add("p2", "weak");
+
+    if (cooldownIndexes.includes(i)) {
+      cells[i].classList.add(COOLDOWN_CLASS);
+    }
   });
 
   countAEl.textContent = `残り ${turnsLeft[P1]}`;
