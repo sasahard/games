@@ -1,39 +1,67 @@
+/* ==========================
+   全体レイアウト
+========================== */
 body {
-  font-family: system-ui, sans-serif;
+  font-family: "Trebuchet MS", system-ui, sans-serif;
   background: #f4f4f4;
   margin: 0;
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
   padding-bottom: 80px; /* 下部UI分 */
-  text-align: center;
 }
 
-/* 盤面 */
+/* ==========================
+   盤面
+========================== */
 #board {
   display: grid;
   grid-template-columns: repeat(10, 1fr);
   gap: 4px;
-  max-width: 90vw;
-  margin: 16px auto;
+  width: min(90vw, 420px);
 }
 
-/* マス */
+/* ==========================
+   マス
+========================== */
 .cell {
   aspect-ratio: 1 / 1;
   background: #ddd;
   border-radius: 4px;
   cursor: pointer;
+  transition: transform 0.05s;
 }
 
-.cell.p1 { background: #4a90e2; }
-.cell.p2 { background: #e94a4a; }
-.cell.weak { opacity: 0.5; }
+.cell:active {
+  transform: scale(0.95);
+}
 
-/* 下部INFO */
+.cell.p1 {
+  background: #4a90e2;
+}
+
+.cell.p2 {
+  background: #e94a4a;
+}
+
+.cell.weak {
+  opacity: 0.5;
+}
+
+/* ==========================
+   下部INFO UI
+========================== */
 #info {
   position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
   height: 64px;
+
   display: flex;
   background: #222;
   color: #fff;
@@ -45,6 +73,8 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+
   opacity: 0.4;
   transition: opacity 0.2s, background 0.2s;
 }
@@ -53,18 +83,28 @@ body {
   opacity: 1;
 }
 
-#playerA.active { background: #4a90e2; }
-#playerB.active { background: #e94a4a; }
+#playerA.active {
+  background: #4a90e2;
+}
+
+#playerB.active {
+  background: #e94a4a;
+}
 
 .label {
-  font-size: 0.9em;
+  font-size: 0.85em;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .count {
-  font-size: 0.8em;
+  font-size: 0.75em;
+  opacity: 0.8;
 }
 
-/* 結果 */
+/* ==========================
+   結果表示
+========================== */
 #result {
   font-weight: bold;
   margin-bottom: 72px;
