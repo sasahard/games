@@ -1,3 +1,6 @@
+// ==========================
+// 定数
+// ==========================
 const SIZE = 10;
 const MAX_TURNS = 15;
 
@@ -7,10 +10,19 @@ const P2 = 2;
 const WEAK_P1 = 3;
 const WEAK_P2 = 4;
 
+// ==========================
+// 状態
+// ==========================
 let board = new Array(SIZE * SIZE).fill(EMPTY);
 let currentPlayer = P1;
-let turnsLeft = { 1: MAX_TURNS, 2: MAX_TURNS };
+let turnsLeft = {
+  [P1]: MAX_TURNS,
+  [P2]: MAX_TURNS,
+};
 
+// ==========================
+// DOM
+// ==========================
 const boardEl = document.getElementById("board");
 const playerAEl = document.getElementById("playerA");
 const playerBEl = document.getElementById("playerB");
@@ -18,14 +30,19 @@ const countAEl = document.getElementById("countA");
 const countBEl = document.getElementById("countB");
 const resultEl = document.getElementById("result");
 
+// ==========================
+// 初期化
+// ==========================
 function init() {
   boardEl.innerHTML = "";
-  board.forEach((_, i) => {
+
+  board.forEach((_, index) => {
     const cell = document.createElement("div");
     cell.className = "cell";
-    cell.onclick = () => handleClick(i);
+    cell.addEventListener("click", () => handleClick(index));
     boardEl.appendChild(cell);
   });
+
   updateUI();
 }
 
@@ -38,7 +55,6 @@ function handleClick(index) {
   if (isGameOver()) return;
 
   const targets = getCrossIndexes(index);
-
   let acted = false;
 
   targets.forEach(i => {
@@ -49,6 +65,7 @@ function handleClick(index) {
 
   turnsLeft[currentPlayer]--;
   currentPlayer = currentPlayer === P1 ? P2 : P1;
+
   updateUI();
 }
 
@@ -58,17 +75,20 @@ function handleClick(index) {
 function applyMark(index) {
   const state = board[index];
 
+  // 空白 → 取得
   if (state === EMPTY) {
     board[index] = currentPlayer;
     return true;
   }
 
+  // 相手陣地 → 弱体化
   if (state === opponentTerritory()) {
     board[index] = opponentWeak();
     return true;
   }
 
-  if (state === currentWeak()) {
+  // 相手の弱体化 → 奪取
+  if (state === opponentWeak()) {
     board[index] = currentPlayer;
     return true;
   }
@@ -77,7 +97,7 @@ function applyMark(index) {
 }
 
 // ==========================
-// 上下左右のindex取得
+// 十字インデックス取得
 // ==========================
 function getCrossIndexes(index) {
   const x = index % SIZE;
@@ -92,7 +112,10 @@ function getCrossIndexes(index) {
   ];
 
   return positions
-    .filter(p => p.x >= 0 && p.x < SIZE && p.y >= 0 && p.y < SIZE)
+    .filter(p =>
+      p.x >= 0 && p.x < SIZE &&
+      p.y >= 0 && p.y < SIZE
+    )
     .map(p => p.y * SIZE + p.x);
 }
 
@@ -104,6 +127,7 @@ function updateUI() {
 
   board.forEach((state, i) => {
     cells[i].className = "cell";
+
     if (state === P1) cells[i].classList.add("p1");
     if (state === P2) cells[i].classList.add("p2");
     if (state === WEAK_P1) cells[i].classList.add("p1", "weak");
@@ -116,11 +140,13 @@ function updateUI() {
   playerAEl.classList.toggle("active", currentPlayer === P1);
   playerBEl.classList.toggle("active", currentPlayer === P2);
 
-  if (isGameOver()) showResult();
+  if (isGameOver()) {
+    showResult();
+  }
 }
 
 // ==========================
-// 勝敗
+// 勝敗判定
 // ==========================
 function showResult() {
   const a = board.filter(v => v === P1).length;
@@ -138,12 +164,11 @@ function showResult() {
 function opponentTerritory() {
   return currentPlayer === P1 ? P2 : P1;
 }
+
 function opponentWeak() {
   return currentPlayer === P1 ? WEAK_P2 : WEAK_P1;
 }
-function currentWeak() {
-  return currentPlayer === P1 ? WEAK_P1 : WEAK_P2;
-}
+
 function isGameOver() {
   return turnsLeft[P1] === 0 && turnsLeft[P2] === 0;
 }
