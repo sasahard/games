@@ -111,12 +111,11 @@ function handleClick(index) {
   });
   if (acted) setCooldown(targets);
 
-  // ターン消費 & 勝敗判定
   consumeTurnAndCheckEnd();
 }
 
 // ==========================
-// ターン消費と終了判定（★核）
+// ターン消費と終了判定（核）
 // ==========================
 function consumeTurnAndCheckEnd() {
   turnsLeft[currentPlayer]--;
