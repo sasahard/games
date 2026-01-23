@@ -3,7 +3,10 @@
 ========================== */
 body {
   font-family: "Trebuchet MS", system-ui, sans-serif;
-  background: #f4f4f4;
+
+  /* 背景はJSで設定 */
+  background-color: #000;
+
   margin: 0;
   min-height: 100vh;
 
@@ -12,7 +15,9 @@ body {
   align-items: center;
   justify-content: center;
 
-  padding-bottom: 80px; /* 下部UI分 */
+  padding-bottom: 80px; /* 下部INFO分 */
+
+  overscroll-behavior: none;
 }
 
 /* ==========================
@@ -23,6 +28,11 @@ body {
   grid-template-columns: repeat(10, 1fr);
   gap: 4px;
   width: min(90vw, 420px);
+
+  padding: 6px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(2px);
 }
 
 /* ==========================
@@ -30,12 +40,12 @@ body {
 ========================== */
 .cell {
   aspect-ratio: 1 / 1;
-  background: #ddd;
+  background: rgba(220, 220, 220, 0.9);
   border-radius: 4px;
   cursor: pointer;
+
   transition: transform 0.05s;
 
-  /* ★重要：outline表示のため */
   box-sizing: border-box;
 }
 
@@ -55,9 +65,9 @@ body {
   opacity: 0.5;
 }
 
-/* ★ クールダウン（点線枠） */
+/* クールダウン（点線枠） */
 .cell.cooldown {
-  outline: 2px dashed rgba(255, 255, 255, 0.7);
+  outline: 2px dashed rgba(255, 255, 255, 0.75);
   outline-offset: -2px;
   cursor: not-allowed;
 }
@@ -73,11 +83,12 @@ body {
   height: 64px;
 
   display: flex;
-  background: #222;
+  background: rgba(0, 0, 0, 0.85);
   color: #fff;
+
+  backdrop-filter: blur(4px);
 }
 
-/* プレイヤー表示 */
 .player {
   flex: 1;
   display: flex;
@@ -118,4 +129,6 @@ body {
 #result {
   font-weight: bold;
   margin-bottom: 72px;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
 }
