@@ -90,7 +90,17 @@ body {
   align-items: center;
 
   color: #fff;
-  transition: background 0.2s;
+  transition: opacity 0.2s;
+}
+
+/* 相手の番（半透明） */
+.player:not(.active) {
+  opacity: 0.35;
+}
+
+/* 自分の番 */
+.player.active {
+  opacity: 1;
 }
 
 /* アクティブ強調ライン */
@@ -102,32 +112,17 @@ body {
   width: 84%;
   height: 4px;
   border-radius: 2px;
+  background: #fff;
 }
 
 /* Player A */
 #playerA {
-  background: rgba(74, 144, 226, 0.35);
-}
-
-#playerA.active {
-  background: rgba(74, 144, 226, 0.95);
-}
-
-#playerA.active::before {
-  background: #ffffff;
+  background: rgb(74, 144, 226);
 }
 
 /* Player B */
 #playerB {
-  background: rgba(233, 74, 74, 0.35);
-}
-
-#playerB.active {
-  background: rgba(233, 74, 74, 0.95);
-}
-
-#playerB.active::before {
-  background: #ffffff;
+  background: rgb(233, 74, 74);
 }
 
 /* テキスト */
