@@ -91,13 +91,12 @@ function fixBoardSize() {
 window.addEventListener("resize", fixBoardSize);
 
 // ==========================
-// クリック処理
+// クリック処理（★修正点）
 // ==========================
 function handleClick(index) {
   if (isGameOver()) return;
 
   const { x, y } = indexToXY(index);
-
   if (!isMovable(x, y)) return;
   if (cooldownIndexes.includes(index)) return;
 
@@ -111,8 +110,14 @@ function handleClick(index) {
   targets.forEach(i => {
     if (applyMark(i)) acted = true;
   });
-
   if (acted) setCooldown(targets);
+
+  // ★ ターン消費直後に勝敗判定
+  if (isGameOver()) {
+    updateUI();   // 最終状態を描画
+    showResult(); // 即結果表示
+    return;
+  }
 
   switchTurn();
   updateUI();
@@ -171,7 +176,6 @@ function isMovable(x, y) {
 // ==========================
 function updateUI() {
   const cells = document.querySelectorAll(".cell");
-
   cells.forEach(c => c.innerHTML = "");
 
   board.forEach((state, i) => {
@@ -191,19 +195,17 @@ function updateUI() {
 
   drawIcons(cells);
 
-  if (countAEl) countAEl.textContent = `残り ${turnsLeft[P1]}`;
-  if (countBEl) countBEl.textContent = `残り ${turnsLeft[P2]}`;
+  countAEl.textContent = `残り ${turnsLeft[P1]}`;
+  countBEl.textContent = `残り ${turnsLeft[P2]}`;
 
-  if (playerAEl) playerAEl.classList.toggle("active", currentPlayer === P1);
-  if (playerBEl) playerBEl.classList.toggle("active", currentPlayer === P2);
+  playerAEl.classList.toggle("active", currentPlayer === P1);
+  playerBEl.classList.toggle("active", currentPlayer === P2);
 
   fixBoardSize();
-
-  if (isGameOver()) showResult();
 }
 
 // ==========================
-// アイコン描画（GIF、丸枠なし、2倍サイズ、不透明固定）
+// アイコン描画（常に不透明）
 // ==========================
 function drawIcons(cells) {
   [P1, P2].forEach(p => {
@@ -217,18 +219,12 @@ function drawIcons(cells) {
     icon.style.backgroundSize = "contain";
     icon.style.backgroundRepeat = "no-repeat";
     icon.style.backgroundPosition = "center";
-
-    // マス基準で2倍サイズ
     icon.style.width = "40px";
     icon.style.height = "40px";
-
-    // マス中央に配置
     icon.style.position = "absolute";
     icon.style.top = "50%";
     icon.style.left = "50%";
     icon.style.transform = "translate(-50%, -50%)";
-
-    // 常に不透明
     icon.style.opacity = "1";
 
     cells[idx].appendChild(icon);
