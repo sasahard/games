@@ -36,7 +36,6 @@ const WEAK_P2 = 4;
 let board;
 let currentPlayer;
 let turnsLeft;
-let gameOver = false;
 
 let playerPos = {
   [P1]: { x: 0, y: SIZE - 1 },
@@ -54,7 +53,6 @@ const playerAEl = document.getElementById("playerA");
 const playerBEl = document.getElementById("playerB");
 const countAEl = document.getElementById("countA");
 const countBEl = document.getElementById("countB");
-const resultModalEl = document.getElementById("resultModal");
 
 // ==========================
 // 初期化
@@ -63,7 +61,6 @@ function init() {
   board = new Array(SIZE * SIZE).fill(EMPTY);
   currentPlayer = P1;
   turnsLeft = { [P1]: MAX_TURNS, [P2]: MAX_TURNS };
-  gameOver = false;
   clearCooldown();
 
   playerPos[P1] = { x: 0, y: SIZE - 1 };
@@ -96,15 +93,16 @@ window.addEventListener("resize", fixBoardSize);
 // クリック処理
 // ==========================
 function handleClick(index) {
-  if (gameOver) return;
   if (turnsLeft[currentPlayer] <= 0) return;
 
   const { x, y } = indexToXY(index);
   if (!isMovable(x, y)) return;
   if (cooldownIndexes.includes(index)) return;
 
+  // 移動
   playerPos[currentPlayer] = { x, y };
 
+  // マーキング
   const targets = getCrossIndexes(index);
   let acted = false;
   targets.forEach(i => {
@@ -112,23 +110,14 @@ function handleClick(index) {
   });
   if (acted) setCooldown(targets);
 
-  consumeTurnAndCheckEnd();
+  consumeTurn();
 }
 
 // ==========================
-// ターン消費と終了判定（完全修正版）
+// ターン消費のみ（終了判定なし）
 // ==========================
-function consumeTurnAndCheckEnd() {
+function consumeTurn() {
   turnsLeft[currentPlayer]--;
-
-  updateUI();
-
-  // ★ 今のプレイヤーが0になった瞬間に終了
-  if (turnsLeft[currentPlayer] === 0) {
-    gameOver = true;
-    showResult();
-    return;
-  }
 
   switchTurn();
   updateUI();
@@ -200,26 +189,6 @@ function clearCooldown() {
 function switchTurn() {
   currentPlayer = currentPlayer === P1 ? P2 : P1;
   if (currentPlayer === cooldownOwner) clearCooldown();
-}
-
-// ==========================
-// 勝敗判定
-// ==========================
-function showResult() {
-  const a = board.filter(v => v === P1).length;
-  const b = board.filter(v => v === P2).length;
-
-  resultModalEl.textContent =
-    a > b ? "Player A Win" :
-    b > a ? "Player B Win" :
-    "Draw";
-
-  resultModalEl.classList.add("show");
-
-  setTimeout(() => {
-    resultModalEl.classList.remove("show");
-    init();
-  }, 2000);
 }
 
 // ==========================
