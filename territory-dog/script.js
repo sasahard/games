@@ -91,7 +91,7 @@ function fixBoardSize() {
 window.addEventListener("resize", fixBoardSize);
 
 // ==========================
-// クリック処理
+// クリック処理（改善版）
 // ==========================
 function handleClick(index) {
   if (isGameOver()) return;
@@ -101,12 +101,18 @@ function handleClick(index) {
   // 移動可能範囲外
   if (!isMovable(x, y)) return;
 
-  // クールダウン
+  // クールダウン中
   if (cooldownIndexes.includes(index)) return;
 
-  // 移動
+  // --------
+  // 移動（ここで確定）
+  // --------
   playerPos[currentPlayer] = { x, y };
 
+  // ★ 改善ポイント：移動したら必ずターン消費
+  turnsLeft[currentPlayer]--;
+
+  // マーキング処理
   const targets = getCrossIndexes(index);
   let acted = false;
 
@@ -114,10 +120,11 @@ function handleClick(index) {
     if (applyMark(i)) acted = true;
   });
 
-  if (!acted) return;
+  // マーキングが起きた場合のみクールダウン
+  if (acted) {
+    setCooldown(targets);
+  }
 
-  setCooldown(targets);
-  turnsLeft[currentPlayer]--;
   switchTurn();
   updateUI();
 }
@@ -144,7 +151,7 @@ function applyMark(index) {
 }
 
 // ==========================
-// 十字
+// 十字取得
 // ==========================
 function getCrossIndexes(index) {
   const { x, y } = indexToXY(index);
