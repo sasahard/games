@@ -1,133 +1,182 @@
-/* =========================
-   全体ベース
-========================= */
-html, body {
+/* ==========================
+   全体レイアウト
+========================== */
+body {
+  font-family: "Trebuchet MS", system-ui, sans-serif;
   margin: 0;
-  padding: 0;
-  height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
-               "Hiragino Sans", "Noto Sans JP", sans-serif;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  overflow: hidden;
-  color: #fff;
-}
+  min-height: 100vh;
 
-/* =========================
-   ゲーム全体レイアウト
-========================= */
-#game {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  height: 100%;
-  padding: 12px;
-  box-sizing: border-box;
-}
-
-/* =========================
-   盤面（中央固定）
-========================= */
-#board-wrapper {
-  flex: 1;
-  display: flex;
   align-items: center;
   justify-content: center;
+
+  padding-bottom: 80px; /* 下部INFO分 */
+
+  background-color: #000; /* JSで背景画像を上書き */
+
+  /* 背景スライド完全防止 */
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
 }
 
+/* ==========================
+   盤面
+========================== */
 #board {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+
+  width: min(90vw, 420px);
+  margin: auto; /* 常に画面中央 */
 }
 
-/* マス */
+/* ==========================
+   マス
+========================== */
 .cell {
-  width: 56px;
-  height: 56px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.15);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.2),
-    0 4px 10px rgba(0,0,0,0.3);
-  transition: transform 0.1s ease, background 0.2s ease;
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
+
+  background: rgba(255, 255, 255, 0.25); /* 空マスは少し透明 */
+  border-radius: 4px;
+
+  cursor: pointer;
+  transition: transform 0.05s, background 0.2s;
 }
 
 .cell:active {
-  transform: scale(0.96);
+  transform: scale(0.95);
 }
 
-/* =========================
-   担当プレイヤーUI（下部）
-========================= */
-#player-info {
+/* プレイヤー色 */
+.cell.p1 {
+  background: #4a90e2;
+}
+
+.cell.p2 {
+  background: #e94a4a;
+}
+
+/* 弱体マス */
+.cell.weak {
+  opacity: 0.5;
+}
+
+/* クールダウン（点線） */
+.cell.cooldown {
+  outline: 2px dashed rgba(255, 255, 255, 0.6);
+  outline-offset: -2px;
+}
+
+/* ==========================
+   下部INFO UI（今風・安定）
+========================== */
+#info {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 64px;
+
   display: flex;
-  gap: 12px;
+  gap: 1px;
+
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(6px);
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
 }
 
-/* プレイヤーカード共通 */
-.player-card {
+/* プレイヤー枠 */
+.player {
+  position: relative;
   flex: 1;
-  padding: 14px 12px;
-  border-radius: 16px;
-  text-align: center;
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: 0.04em;
-  background: linear-gradient(180deg, #2a2a2a, #1a1a1a);
-  box-shadow:
-    0 8px 20px rgba(0,0,0,0.45),
-    inset 0 0 0 1px rgba(255,255,255,0.08);
-  transition: transform 0.2s ease, filter 0.2s ease;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.65);
+
+  opacity: 0.45; /* 非アクティブは薄く */
+  transition: background 0.2s, color 0.2s, opacity 0.2s;
 }
 
-/* 非アクティブ */
-.player-card.inactive {
-  filter: brightness(0.6);
+/* アクティブ時 共通バー */
+.player.active::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12%;
+  width: 76%;
+  height: 4px;
+  border-radius: 2px;
 }
 
-/* =========================
-   プレイヤーA（アクティブ）
-========================= */
-.player-a.active {
-  background: linear-gradient(135deg, #ff4d6d, #ff7a9e);
-  box-shadow:
-    0 10px 24px rgba(255,77,109,0.45),
-    inset 0 0 0 1px rgba(255,255,255,0.25);
-  transform: translateY(-2px);
+/* アクティブ状態 */
+.player.active {
+  opacity: 1;
+  color: #fff;
 }
 
-/* =========================
-   プレイヤーB（アクティブ）
-========================= */
-.player-b.active {
-  background: linear-gradient(135deg, #4d8dff, #6fb1ff);
-  box-shadow:
-    0 10px 24px rgba(77,141,255,0.45),
-    inset 0 0 0 1px rgba(255,255,255,0.25);
-  transform: translateY(-2px);
+/* Player A */
+#playerA.active {
+  background: rgba(74, 144, 226, 0.35);
 }
 
-/* =========================
-   勝敗モーダル（前提）
-========================= */
-#result-modal {
+#playerA.active::before {
+  background: #4a90e2;
+}
+
+/* Player B */
+#playerB.active {
+  background: rgba(233, 74, 74, 0.35);
+}
+
+#playerB.active::before {
+  background: #e94a4a;
+}
+
+/* テキスト */
+.label {
+  font-size: 0.8em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.count {
+  font-size: 0.75em;
+  opacity: 0.9;
+}
+
+/* ==========================
+   勝敗モーダル
+========================== */
+#resultModal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+
   display: flex;
-  align-items: center;
   justify-content: center;
-  z-index: 100;
+  align-items: center;
+
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+
+  color: #fff;
+  font-size: 1.2em;
+  font-weight: bold;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
 }
 
-#result-modal .content {
-  background: #1c1c1e;
-  border-radius: 20px;
-  padding: 28px 24px;
-  text-align: center;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-  font-size: 18px;
-  font-weight: 700;
+#resultModal.show {
+  opacity: 1;
+  pointer-events: auto;
 }
