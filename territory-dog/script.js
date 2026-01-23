@@ -1,4 +1,23 @@
 // ==========================
+// 背景画像ランダム設定
+// ==========================
+const BG_COUNT = 5;
+
+function setRandomBackground() {
+  const num = Math.floor(Math.random() * BG_COUNT) + 1;
+  const url = `images/bg0${num}.jpg`;
+
+  document.body.style.background =
+    `linear-gradient(
+      rgba(0, 0, 0, 0.15),
+      rgba(0, 0, 0, 0.15)
+    ),
+    url("${url}") center / cover no-repeat`;
+}
+
+setRandomBackground();
+
+// ==========================
 // 定数
 // ==========================
 const SIZE = 10;
@@ -10,13 +29,12 @@ const P2 = 2;
 const WEAK_P1 = 3;
 const WEAK_P2 = 4;
 
-const COOLDOWN_CLASS = "cooldown";
-
 // ==========================
 // 状態
 // ==========================
 let board = new Array(SIZE * SIZE).fill(EMPTY);
 let currentPlayer = P1;
+
 let turnsLeft = {
   [P1]: MAX_TURNS,
   [P2]: MAX_TURNS,
@@ -60,7 +78,7 @@ init();
 function handleClick(index) {
   if (isGameOver()) return;
 
-  // クールダウン中は誰も触れない
+  // クールダウン中は操作不可
   if (cooldownIndexes.includes(index)) return;
 
   const targets = getCrossIndexes(index);
@@ -72,7 +90,6 @@ function handleClick(index) {
 
   if (!acted) return;
 
-  // クールダウン設定（このターンで影響した5マス）
   setCooldown(targets);
 
   turnsLeft[currentPlayer]--;
@@ -132,7 +149,6 @@ function getCrossIndexes(index) {
 // クールダウン制御
 // ==========================
 function setCooldown(indexes) {
-  clearCooldown();
   cooldownIndexes = indexes;
   cooldownOwner = currentPlayer;
 }
@@ -148,7 +164,7 @@ function clearCooldown() {
 function switchTurn() {
   currentPlayer = currentPlayer === P1 ? P2 : P1;
 
-  // 次の「自分の番」に戻ったらクールダウン解除
+  // 次の自分の番で解除
   if (currentPlayer === cooldownOwner) {
     clearCooldown();
   }
@@ -169,7 +185,7 @@ function updateUI() {
     if (state === WEAK_P2) cells[i].classList.add("p2", "weak");
 
     if (cooldownIndexes.includes(i)) {
-      cells[i].classList.add(COOLDOWN_CLASS);
+      cells[i].classList.add("cooldown");
     }
   });
 
