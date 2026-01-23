@@ -94,9 +94,8 @@ window.addEventListener("resize", fixBoardSize);
 // クリック処理
 // ==========================
 function handleClick(index) {
-  if (isGameOver()) return;
-
   const { x, y } = indexToXY(index);
+
   if (!isMovable(x, y)) return;
   if (cooldownIndexes.includes(index)) return;
 
@@ -115,14 +114,15 @@ function handleClick(index) {
 }
 
 // ==========================
-// ターン消費と終了判定（核）
+// ターン消費と終了判定（最重要）
 // ==========================
 function consumeTurnAndCheckEnd() {
   turnsLeft[currentPlayer]--;
 
   updateUI();
 
-  if (isGameOver()) {
+  // ★ 両者0になった瞬間に必ず終了
+  if (turnsLeft[P1] === 0 && turnsLeft[P2] === 0) {
     showResult();
     return;
   }
@@ -162,7 +162,7 @@ function getCrossIndexes(index) {
     { x, y: y - 1 },
     { x, y: y + 1 },
     { x: x - 1, y },
-    { x: x + 1, y },
+    { x: x + 1, y }
   ];
 
   return pos
@@ -213,7 +213,7 @@ function updateUI() {
 }
 
 // ==========================
-// アイコン描画（常に不透明）
+// アイコン描画
 // ==========================
 function drawIcons(cells) {
   [P1, P2].forEach(p => {
@@ -222,18 +222,7 @@ function drawIcons(cells) {
 
     const icon = document.createElement("div");
     icon.className = p === P1 ? "p1-icon" : "p2-icon";
-
     icon.style.backgroundImage = `url("images/dog.gif")`;
-    icon.style.backgroundSize = "contain";
-    icon.style.backgroundRepeat = "no-repeat";
-    icon.style.backgroundPosition = "center";
-    icon.style.width = "40px";
-    icon.style.height = "40px";
-    icon.style.position = "absolute";
-    icon.style.top = "50%";
-    icon.style.left = "50%";
-    icon.style.transform = "translate(-50%, -50%)";
-    icon.style.opacity = "1";
 
     cells[idx].appendChild(icon);
   });
@@ -293,7 +282,4 @@ function opponentTerritory() {
 }
 function opponentWeak() {
   return currentPlayer === P1 ? WEAK_P2 : WEAK_P1;
-}
-function isGameOver() {
-  return turnsLeft[P1] === 0 && turnsLeft[P2] === 0;
 }
