@@ -1,5 +1,5 @@
 // ==========================
-// 背景画像ランダム設定（白チラ防止・簡単版）
+// 背景画像ランダム設定
 // ==========================
 const BG_COUNT = 5;
 
@@ -10,11 +10,8 @@ function setRandomBackground() {
   const img = new Image();
   img.onload = () => {
     document.body.style.background =
-      `linear-gradient(
-        rgba(0, 0, 0, 0.15),
-        rgba(0, 0, 0, 0.15)
-      ),
-      url("${url}") center / cover no-repeat`;
+      `linear-gradient(rgba(0,0,0,0.15), rgba(0,0,0,0.15)),
+       url("${url}") center / cover no-repeat`;
   };
   img.src = url;
 }
@@ -25,6 +22,7 @@ setRandomBackground();
 // ==========================
 const SIZE = 10;
 const MAX_TURNS = 15;
+const MOVE_RANGE = 2;
 
 const EMPTY = 0;
 const P1 = 1;
@@ -35,12 +33,13 @@ const WEAK_P2 = 4;
 // ==========================
 // 状態
 // ==========================
-let board = new Array(SIZE * SIZE).fill(EMPTY);
-let currentPlayer = P1;
+let board;
+let currentPlayer;
+let turnsLeft;
 
-let turnsLeft = {
-  [P1]: MAX_TURNS,
-  [P2]: MAX_TURNS,
+let playerPos = {
+  [P1]: { x: 0, y: SIZE - 1 },
+  [P2]: { x: SIZE - 1, y: 0 }
 };
 
 let cooldownIndexes = [];
@@ -57,7 +56,33 @@ const countBEl = document.getElementById("countB");
 const resultModalEl = document.getElementById("resultModal");
 
 // ==========================
-// 盤面サイズ補正
+// 初期化
+// ==========================
+function init() {
+  board = new Array(SIZE * SIZE).fill(EMPTY);
+  currentPlayer = P1;
+  turnsLeft = { [P1]: MAX_TURNS, [P2]: MAX_TURNS };
+  clearCooldown();
+
+  playerPos[P1] = { x: 0, y: SIZE - 1 };
+  playerPos[P2] = { x: SIZE - 1, y: 0 };
+
+  boardEl.innerHTML = "";
+
+  for (let i = 0; i < SIZE * SIZE; i++) {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    cell.addEventListener("click", () => handleClick(i));
+    boardEl.appendChild(cell);
+  }
+
+  fixBoardSize();
+  updateUI();
+}
+init();
+
+// ==========================
+// 盤面サイズ固定
 // ==========================
 function fixBoardSize() {
   const w = boardEl.clientWidth;
@@ -66,35 +91,21 @@ function fixBoardSize() {
 window.addEventListener("resize", fixBoardSize);
 
 // ==========================
-// 初期化
-// ==========================
-function init() {
-  boardEl.innerHTML = "";
-
-  board = new Array(SIZE * SIZE).fill(EMPTY);
-  currentPlayer = P1;
-  turnsLeft[P1] = MAX_TURNS;
-  turnsLeft[P2] = MAX_TURNS;
-  clearCooldown();
-
-  board.forEach((_, index) => {
-    const cell = document.createElement("div");
-    cell.className = "cell";
-    cell.addEventListener("click", () => handleClick(index));
-    boardEl.appendChild(cell);
-  });
-
-  fixBoardSize();
-  updateUI();
-}
-init();
-
-// ==========================
 // クリック処理
 // ==========================
 function handleClick(index) {
   if (isGameOver()) return;
+
+  const { x, y } = indexToXY(index);
+
+  // 移動可能範囲外
+  if (!isMovable(x, y)) return;
+
+  // クールダウン
   if (cooldownIndexes.includes(index)) return;
+
+  // 移動
+  playerPos[currentPlayer] = { x, y };
 
   const targets = getCrossIndexes(index);
   let acted = false;
@@ -133,13 +144,11 @@ function applyMark(index) {
 }
 
 // ==========================
-// 十字取得
+// 十字
 // ==========================
 function getCrossIndexes(index) {
-  const x = index % SIZE;
-  const y = Math.floor(index / SIZE);
-
-  const positions = [
+  const { x, y } = indexToXY(index);
+  const pos = [
     { x, y },
     { x, y: y - 1 },
     { x, y: y + 1 },
@@ -147,35 +156,18 @@ function getCrossIndexes(index) {
     { x: x + 1, y },
   ];
 
-  return positions
-    .filter(p =>
-      p.x >= 0 && p.x < SIZE &&
-      p.y >= 0 && p.y < SIZE
-    )
-    .map(p => p.y * SIZE + p.x);
+  return pos
+    .filter(p => p.x >= 0 && p.x < SIZE && p.y >= 0 && p.y < SIZE)
+    .map(p => xyToIndex(p.x, p.y));
 }
 
 // ==========================
-// クールダウン
+// ダイヤ移動判定
 // ==========================
-function setCooldown(indexes) {
-  cooldownIndexes = indexes;
-  cooldownOwner = currentPlayer;
-}
-
-function clearCooldown() {
-  cooldownIndexes = [];
-  cooldownOwner = null;
-}
-
-// ==========================
-// ターン切替
-// ==========================
-function switchTurn() {
-  currentPlayer = currentPlayer === P1 ? P2 : P1;
-  if (currentPlayer === cooldownOwner) {
-    clearCooldown();
-  }
+function isMovable(x, y) {
+  const p = playerPos[currentPlayer];
+  const dist = Math.abs(x - p.x) + Math.abs(y - p.y);
+  return dist <= MOVE_RANGE;
 }
 
 // ==========================
@@ -183,6 +175,8 @@ function switchTurn() {
 // ==========================
 function updateUI() {
   const cells = document.querySelectorAll(".cell");
+
+  cells.forEach(c => c.innerHTML = "");
 
   board.forEach((state, i) => {
     const cell = cells[i];
@@ -193,10 +187,13 @@ function updateUI() {
     if (state === WEAK_P1) cell.classList.add("p1", "weak");
     if (state === WEAK_P2) cell.classList.add("p2", "weak");
 
-    if (cooldownIndexes.includes(i)) {
-      cell.classList.add("cooldown");
-    }
+    if (cooldownIndexes.includes(i)) cell.classList.add("cooldown");
+
+    const { x, y } = indexToXY(i);
+    if (isMovable(x, y)) cell.classList.add("movable");
   });
+
+  drawIcons(cells);
 
   if (countAEl) countAEl.textContent = `残り ${turnsLeft[P1]}`;
   if (countBEl) countBEl.textContent = `残り ${turnsLeft[P2]}`;
@@ -210,18 +207,50 @@ function updateUI() {
 }
 
 // ==========================
+// アイコン描画
+// ==========================
+function drawIcons(cells) {
+  [P1, P2].forEach(p => {
+    const { x, y } = playerPos[p];
+    const idx = xyToIndex(x, y);
+    const icon = document.createElement("div");
+    icon.className = `icon ${p === P1 ? "p1-icon" : "p2-icon"}`;
+    cells[idx].appendChild(icon);
+  });
+}
+
+// ==========================
+// クールダウン
+// ==========================
+function setCooldown(indexes) {
+  cooldownIndexes = indexes;
+  cooldownOwner = currentPlayer;
+}
+function clearCooldown() {
+  cooldownIndexes = [];
+  cooldownOwner = null;
+}
+
+// ==========================
+// ターン切替
+// ==========================
+function switchTurn() {
+  currentPlayer = currentPlayer === P1 ? P2 : P1;
+  if (currentPlayer === cooldownOwner) clearCooldown();
+}
+
+// ==========================
 // 勝敗
 // ==========================
 function showResult() {
   const a = board.filter(v => v === P1).length;
   const b = board.filter(v => v === P2).length;
 
-  const text =
+  resultModalEl.textContent =
     a > b ? "Player A Win" :
     b > a ? "Player B Win" :
     "Draw";
 
-  resultModalEl.textContent = text;
   resultModalEl.classList.add("show");
 
   setTimeout(() => {
@@ -233,6 +262,12 @@ function showResult() {
 // ==========================
 // ヘルパー
 // ==========================
+function indexToXY(i) {
+  return { x: i % SIZE, y: Math.floor(i / SIZE) };
+}
+function xyToIndex(x, y) {
+  return y * SIZE + x;
+}
 function opponentTerritory() {
   return currentPlayer === P1 ? P2 : P1;
 }
