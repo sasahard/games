@@ -11,11 +11,10 @@ body {
   align-items: center;
   justify-content: center;
 
-  padding-bottom: 80px; /* 下部INFO分 */
+  padding-bottom: 80px;
 
-  background-color: #000; /* JSで背景画像を上書き */
+  background-color: #000;
 
-  /* 背景スライド完全防止 */
   overflow: hidden;
   overscroll-behavior: none;
   touch-action: manipulation;
@@ -26,11 +25,11 @@ body {
 ========================== */
 #board {
   display: grid;
-  grid-template-columns: repeat(10, 1fr);
+  grid-template-columns: repeat(9, 1fr);
   gap: 4px;
 
   width: min(90vw, 420px);
-  margin: auto; /* 常に画面中央 */
+  margin: auto;
 }
 
 /* ==========================
@@ -40,7 +39,7 @@ body {
   aspect-ratio: 1 / 1;
   box-sizing: border-box;
 
-  background: rgba(255, 255, 255, 0.25); /* 空マスは少し透明 */
+  background: rgba(255, 255, 255, 0.25);
   border-radius: 4px;
 
   cursor: pointer;
@@ -51,28 +50,32 @@ body {
   transform: scale(0.95);
 }
 
-/* プレイヤー色 */
+/* プレイヤー */
 .cell.p1 {
   background: #4a90e2;
+  color: #fff;
 }
 
 .cell.p2 {
   background: #e94a4a;
+  color: #fff;
 }
 
-/* 弱体マス */
-.cell.weak {
-  opacity: 0.5;
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4em;
 }
 
-/* クールダウン（点線） */
-.cell.cooldown {
+/* 移動可能ハイライト */
+.cell.movable {
   outline: 2px dashed rgba(255, 255, 255, 0.6);
   outline-offset: -2px;
 }
 
 /* ==========================
-   下部INFO UI（今風・安定）
+   下部INFO UI
 ========================== */
 #info {
   position: fixed;
@@ -89,7 +92,6 @@ body {
   border-top: 1px solid rgba(255, 255, 255, 0.25);
 }
 
-/* プレイヤー枠 */
 .player {
   position: relative;
   flex: 1;
@@ -102,11 +104,15 @@ body {
   background: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.65);
 
-  opacity: 0.45; /* 非アクティブは薄く */
+  opacity: 0.45;
   transition: background 0.2s, color 0.2s, opacity 0.2s;
 }
 
-/* アクティブ時 共通バー */
+.player.active {
+  opacity: 1;
+  color: #fff;
+}
+
 .player.active::before {
   content: "";
   position: absolute;
@@ -117,13 +123,6 @@ body {
   border-radius: 2px;
 }
 
-/* アクティブ状態 */
-.player.active {
-  opacity: 1;
-  color: #fff;
-}
-
-/* Player A */
 #playerA.active {
   background: rgba(74, 144, 226, 0.35);
 }
@@ -132,7 +131,6 @@ body {
   background: #4a90e2;
 }
 
-/* Player B */
 #playerB.active {
   background: rgba(233, 74, 74, 0.35);
 }
@@ -141,7 +139,6 @@ body {
   background: #e94a4a;
 }
 
-/* テキスト */
 .label {
   font-size: 0.8em;
   letter-spacing: 0.08em;
