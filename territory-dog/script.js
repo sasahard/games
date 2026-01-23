@@ -91,39 +91,28 @@ function fixBoardSize() {
 window.addEventListener("resize", fixBoardSize);
 
 // ==========================
-// クリック処理（改善版）
+// クリック処理
 // ==========================
 function handleClick(index) {
   if (isGameOver()) return;
 
   const { x, y } = indexToXY(index);
 
-  // 移動可能範囲外
   if (!isMovable(x, y)) return;
-
-  // クールダウン中
   if (cooldownIndexes.includes(index)) return;
 
-  // --------
-  // 移動（ここで確定）
-  // --------
+  // 移動確定
   playerPos[currentPlayer] = { x, y };
-
-  // ★ 改善ポイント：移動したら必ずターン消費
   turnsLeft[currentPlayer]--;
 
-  // マーキング処理
+  // マーキング
   const targets = getCrossIndexes(index);
   let acted = false;
-
   targets.forEach(i => {
     if (applyMark(i)) acted = true;
   });
 
-  // マーキングが起きた場合のみクールダウン
-  if (acted) {
-    setCooldown(targets);
-  }
+  if (acted) setCooldown(targets);
 
   switchTurn();
   updateUI();
@@ -169,7 +158,7 @@ function getCrossIndexes(index) {
 }
 
 // ==========================
-// ダイヤ移動判定
+// 移動可能判定
 // ==========================
 function isMovable(x, y) {
   const p = playerPos[currentPlayer];
@@ -214,14 +203,19 @@ function updateUI() {
 }
 
 // ==========================
-// アイコン描画
-// ==========================
+// アイコン描画（GIF対応版）
 function drawIcons(cells) {
   [P1, P2].forEach(p => {
     const { x, y } = playerPos[p];
     const idx = xyToIndex(x, y);
+
     const icon = document.createElement("div");
     icon.className = `icon ${p === P1 ? "p1-icon" : "p2-icon"}`;
+    icon.style.backgroundImage = `url("images/dog.gif")`; // GIF反映
+    icon.style.backgroundSize = "contain";
+    icon.style.backgroundRepeat = "no-repeat";
+    icon.style.backgroundPosition = "center";
+
     cells[idx].appendChild(icon);
   });
 }
@@ -247,7 +241,7 @@ function switchTurn() {
 }
 
 // ==========================
-// 勝敗
+// 勝敗判定
 // ==========================
 function showResult() {
   const a = board.filter(v => v === P1).length;
