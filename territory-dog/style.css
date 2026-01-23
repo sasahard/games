@@ -83,12 +83,17 @@ body {
 }
 
 /* ==========================
-   プレイヤーアイコン（★追加）
+   プレイヤーアイコン（切り抜きGIF対応）
 ========================== */
 .icon {
   width: 20px;
   height: 20px;
   border-radius: 50%;
+
+  /* 背景色不要、GIF画像を直接 */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 
   box-shadow:
     0 0 0 2px rgba(0, 0, 0, 0.4),
@@ -97,14 +102,13 @@ body {
   pointer-events: none;
 }
 
-/* 今は色だけ。後で画像に差し替え可能 */
+/* プレイヤーごとのGIF指定 */
 .p1-icon {
-  background: #ffffff;
+  background-image: url("images/dog.gif");
 }
 
 .p2-icon {
-  background: #ffffff;
-  opacity: 0.85;
+  background-image: url("images/dog.gif");
 }
 
 /* ==========================
