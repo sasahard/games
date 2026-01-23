@@ -116,14 +116,15 @@ function handleClick(index) {
 }
 
 // ==========================
-// ターン消費と終了判定（最重要）
+// ターン消費と終了判定（完全修正版）
 // ==========================
 function consumeTurnAndCheckEnd() {
   turnsLeft[currentPlayer]--;
 
   updateUI();
 
-  if (turnsLeft[P1] === 0 && turnsLeft[P2] === 0) {
+  // ★ 今のプレイヤーが0になった瞬間に終了
+  if (turnsLeft[currentPlayer] === 0) {
     gameOver = true;
     showResult();
     return;
@@ -167,7 +168,7 @@ function updateUI() {
 }
 
 // ==========================
-// アイコン描画（CSS前提で確実表示）
+// アイコン描画
 // ==========================
 function drawIcons(cells) {
   [P1, P2].forEach(p => {
