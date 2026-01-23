@@ -36,6 +36,7 @@ const WEAK_P2 = 4;
 let board;
 let currentPlayer;
 let turnsLeft;
+let gameOver = false;
 
 let playerPos = {
   [P1]: { x: 0, y: SIZE - 1 },
@@ -61,6 +62,7 @@ function init() {
   board = new Array(SIZE * SIZE).fill(EMPTY);
   currentPlayer = P1;
   turnsLeft = { [P1]: MAX_TURNS, [P2]: MAX_TURNS };
+  gameOver = false;
   clearCooldown();
 
   playerPos[P1] = { x: 0, y: SIZE - 1 };
@@ -93,31 +95,44 @@ window.addEventListener("resize", fixBoardSize);
 // クリック処理
 // ==========================
 function handleClick(index) {
-  if (turnsLeft[currentPlayer] <= 0) return;
+  if (gameOver) return;
 
-  const { x, y } = indexToXY(index);
-  if (!isMovable(x, y)) return;
-  if (cooldownIndexes.includes(index)) return;
-
-  // 移動
-  playerPos[currentPlayer] = { x, y };
-
-  // マーキング
-  const targets = getCrossIndexes(index);
   let acted = false;
-  targets.forEach(i => {
-    if (applyMark(i)) acted = true;
-  });
-  if (acted) setCooldown(targets);
 
-  consumeTurn();
+  // 残りターンがある場合のみ行動可能
+  if (turnsLeft[currentPlayer] > 0) {
+    const { x, y } = indexToXY(index);
+
+    if (isMovable(x, y) && !cooldownIndexes.includes(index)) {
+      // 移動
+      playerPos[currentPlayer] = { x, y };
+
+      // マーキング
+      const targets = getCrossIndexes(index);
+      targets.forEach(i => {
+        if (applyMark(i)) acted = true;
+      });
+      if (acted) setCooldown(targets);
+    }
+  }
+
+  consumeTurnAndCheckEnd();
 }
 
 // ==========================
-// ターン消費のみ（終了判定なし）
+// ターン消費＋終了判定
 // ==========================
-function consumeTurn() {
-  turnsLeft[currentPlayer]--;
+function consumeTurnAndCheckEnd() {
+  if (turnsLeft[currentPlayer] > 0) {
+    turnsLeft[currentPlayer]--;
+  }
+
+  // 両者0になった瞬間のみ終了
+  if (turnsLeft[P1] === 0 && turnsLeft[P2] === 0) {
+    gameOver = true;
+    showResult();
+    return;
+  }
 
   switchTurn();
   updateUI();
@@ -166,9 +181,24 @@ function drawIcons(cells) {
 
     const icon = document.createElement("div");
     icon.className = `icon ${p === P1 ? "p1-icon" : "p2-icon"}`;
-
     cells[idx].appendChild(icon);
   });
+}
+
+// ==========================
+// 勝敗判定
+// ==========================
+function showResult() {
+  const a = board.filter(v => v === P1).length;
+  const b = board.filter(v => v === P2).length;
+
+  alert(
+    a > b ? "Player A Win" :
+    b > a ? "Player B Win" :
+    "Draw"
+  );
+
+  init();
 }
 
 // ==========================
