@@ -11,9 +11,9 @@ body {
   align-items: center;
   justify-content: center;
 
-  padding-bottom: 80px;
+  padding-bottom: 80px; /* 下部INFO分 */
 
-  background-color: #000;
+  background-color: #000; /* JSで背景画像を上書き */
 
   overflow: hidden;
   overscroll-behavior: none;
@@ -25,7 +25,7 @@ body {
 ========================== */
 #board {
   display: grid;
-  grid-template-columns: repeat(9, 1fr);
+  grid-template-columns: repeat(10, 1fr);
   gap: 4px;
 
   width: min(90vw, 420px);
@@ -44,34 +44,67 @@ body {
 
   cursor: pointer;
   transition: transform 0.05s, background 0.2s;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  position: relative; /* icon用 */
 }
 
 .cell:active {
   transform: scale(0.95);
 }
 
-/* プレイヤー */
+/* プレイヤー色 */
 .cell.p1 {
   background: #4a90e2;
-  color: #fff;
 }
 
 .cell.p2 {
   background: #e94a4a;
-  color: #fff;
 }
 
-.cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.4em;
+/* 弱体マス */
+.cell.weak {
+  opacity: 0.5;
 }
 
-/* 移動可能ハイライト */
-.cell.movable {
+/* クールダウン */
+.cell.cooldown {
   outline: 2px dashed rgba(255, 255, 255, 0.6);
   outline-offset: -2px;
+}
+
+/* 移動可能範囲 */
+.cell.movable {
+  outline: 2px solid rgba(255, 255, 255, 0.35);
+  outline-offset: -2px;
+}
+
+/* ==========================
+   プレイヤーアイコン（★追加）
+========================== */
+.icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.4),
+    0 0 6px rgba(255, 255, 255, 0.6);
+
+  pointer-events: none;
+}
+
+/* 今は色だけ。後で画像に差し替え可能 */
+.p1-icon {
+  background: #ffffff;
+}
+
+.p2-icon {
+  background: #ffffff;
+  opacity: 0.85;
 }
 
 /* ==========================
@@ -92,6 +125,7 @@ body {
   border-top: 1px solid rgba(255, 255, 255, 0.25);
 }
 
+/* プレイヤー枠 */
 .player {
   position: relative;
   flex: 1;
@@ -108,11 +142,7 @@ body {
   transition: background 0.2s, color 0.2s, opacity 0.2s;
 }
 
-.player.active {
-  opacity: 1;
-  color: #fff;
-}
-
+/* アクティブ時バー */
 .player.active::before {
   content: "";
   position: absolute;
@@ -123,22 +153,29 @@ body {
   border-radius: 2px;
 }
 
+/* アクティブ */
+.player.active {
+  opacity: 1;
+  color: #fff;
+}
+
+/* Player A */
 #playerA.active {
   background: rgba(74, 144, 226, 0.35);
 }
-
 #playerA.active::before {
   background: #4a90e2;
 }
 
+/* Player B */
 #playerB.active {
   background: rgba(233, 74, 74, 0.35);
 }
-
 #playerB.active::before {
   background: #e94a4a;
 }
 
+/* テキスト */
 .label {
   font-size: 0.8em;
   letter-spacing: 0.08em;
