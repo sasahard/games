@@ -22,7 +22,7 @@ setRandomBackground();
 // ==========================
 const SIZE = 10;
 const MAX_TURNS = 15;
-const MOVE_RANGE = 2;
+const MOVE_RANGE = 3;
 
 const EMPTY = 0;
 const P1 = 1;
@@ -91,7 +91,7 @@ function fixBoardSize() {
 window.addEventListener("resize", fixBoardSize);
 
 // ==========================
-// クリック処理（★修正点）
+// クリック処理
 // ==========================
 function handleClick(index) {
   if (isGameOver()) return;
@@ -102,7 +102,6 @@ function handleClick(index) {
 
   // 移動確定
   playerPos[currentPlayer] = { x, y };
-  turnsLeft[currentPlayer]--;
 
   // マーキング
   const targets = getCrossIndexes(index);
@@ -112,10 +111,20 @@ function handleClick(index) {
   });
   if (acted) setCooldown(targets);
 
-  // ★ ターン消費直後に勝敗判定
+  // ターン消費 & 勝敗判定
+  consumeTurnAndCheckEnd();
+}
+
+// ==========================
+// ターン消費と終了判定（★核）
+// ==========================
+function consumeTurnAndCheckEnd() {
+  turnsLeft[currentPlayer]--;
+
+  updateUI();
+
   if (isGameOver()) {
-    updateUI();   // 最終状態を描画
-    showResult(); // 即結果表示
+    showResult();
     return;
   }
 
