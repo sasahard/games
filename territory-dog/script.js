@@ -23,9 +23,8 @@ setRandomBackground();
 // ==========================
 // 定数
 // ==========================
-const SIZE = 9;
+const SIZE = 10;
 const MAX_TURNS = 15;
-const MOVE_RANGE = 2;
 
 const EMPTY = 0;
 const P1 = 1;
@@ -47,12 +46,6 @@ let turnsLeft = {
 let cooldownIndexes = [];
 let cooldownOwner = null;
 
-// プレイヤー位置
-let playerPos = {
-  [P1]: { x: 0, y: SIZE - 1 },
-  [P2]: { x: SIZE - 1, y: 0 }
-};
-
 // ==========================
 // DOM
 // ==========================
@@ -64,28 +57,34 @@ const countBEl = document.getElementById("countB");
 const resultModalEl = document.getElementById("resultModal");
 
 // ==========================
+// 盤面サイズ補正
+// ==========================
+function fixBoardSize() {
+  const w = boardEl.clientWidth;
+  boardEl.style.height = `${w}px`;
+}
+window.addEventListener("resize", fixBoardSize);
+
+// ==========================
 // 初期化
 // ==========================
 function init() {
   boardEl.innerHTML = "";
+
   board = new Array(SIZE * SIZE).fill(EMPTY);
   currentPlayer = P1;
-
   turnsLeft[P1] = MAX_TURNS;
   turnsLeft[P2] = MAX_TURNS;
-
   clearCooldown();
 
-  playerPos[P1] = { x: 0, y: SIZE - 1 };
-  playerPos[P2] = { x: SIZE - 1, y: 0 };
-
-  for (let i = 0; i < SIZE * SIZE; i++) {
+  board.forEach((_, index) => {
     const cell = document.createElement("div");
     cell.className = "cell";
-    cell.addEventListener("click", () => handleClick(i));
+    cell.addEventListener("click", () => handleClick(index));
     boardEl.appendChild(cell);
-  }
+  });
 
+  fixBoardSize();
   updateUI();
 }
 init();
@@ -96,14 +95,6 @@ init();
 function handleClick(index) {
   if (isGameOver()) return;
   if (cooldownIndexes.includes(index)) return;
-
-  const x = index % SIZE;
-  const y = Math.floor(index / SIZE);
-
-  if (!isMovableRange(x, y)) return;
-
-  // プレイヤー移動
-  playerPos[currentPlayer] = { x, y };
 
   const targets = getCrossIndexes(index);
   let acted = false;
@@ -121,14 +112,6 @@ function handleClick(index) {
 }
 
 // ==========================
-// 移動可能範囲判定（ダイヤ）
-// ==========================
-function isMovableRange(x, y) {
-  const p = playerPos[currentPlayer];
-  return Math.abs(p.x - x) + Math.abs(p.y - y) <= MOVE_RANGE;
-}
-
-// ==========================
 // マーキング
 // ==========================
 function applyMark(index) {
@@ -138,22 +121,19 @@ function applyMark(index) {
     board[index] = currentPlayer;
     return true;
   }
-
   if (state === opponentTerritory()) {
     board[index] = opponentWeak();
     return true;
   }
-
   if (state === opponentWeak()) {
     board[index] = currentPlayer;
     return true;
   }
-
   return false;
 }
 
 // ==========================
-// 十字インデックス
+// 十字取得
 // ==========================
 function getCrossIndexes(index) {
   const x = index % SIZE;
@@ -213,38 +193,20 @@ function updateUI() {
     if (state === WEAK_P1) cell.classList.add("p1", "weak");
     if (state === WEAK_P2) cell.classList.add("p2", "weak");
 
-    const x = i % SIZE;
-    const y = Math.floor(i / SIZE);
-
-    if (isMovableRange(x, y)) {
-      cell.classList.add("movable");
-    }
-
     if (cooldownIndexes.includes(i)) {
       cell.classList.add("cooldown");
     }
   });
 
-  // プレイヤー表示
-  placePlayerIcon(playerAEl, playerPos[P1]);
-  placePlayerIcon(playerBEl, playerPos[P2]);
+  if (countAEl) countAEl.textContent = `残り ${turnsLeft[P1]}`;
+  if (countBEl) countBEl.textContent = `残り ${turnsLeft[P2]}`;
 
-  countAEl.textContent = `残り ${turnsLeft[P1]}`;
-  countBEl.textContent = `残り ${turnsLeft[P2]}`;
+  if (playerAEl) playerAEl.classList.toggle("active", currentPlayer === P1);
+  if (playerBEl) playerBEl.classList.toggle("active", currentPlayer === P2);
 
-  playerAEl.classList.toggle("active", currentPlayer === P1);
-  playerBEl.classList.toggle("active", currentPlayer === P2);
+  fixBoardSize();
 
   if (isGameOver()) showResult();
-}
-
-// ==========================
-// プレイヤー配置
-// ==========================
-function placePlayerIcon(el, pos) {
-  const size = boardEl.clientWidth / SIZE;
-  el.style.left = `${pos.x * size}px`;
-  el.style.top = `${pos.y * size}px`;
 }
 
 // ==========================
@@ -274,11 +236,9 @@ function showResult() {
 function opponentTerritory() {
   return currentPlayer === P1 ? P2 : P1;
 }
-
 function opponentWeak() {
   return currentPlayer === P1 ? WEAK_P2 : WEAK_P1;
 }
-
 function isGameOver() {
   return turnsLeft[P1] === 0 && turnsLeft[P2] === 0;
 }
