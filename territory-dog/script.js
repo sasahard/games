@@ -22,6 +22,7 @@ setRandomBackground();
 // ==========================
 const SIZE = 10;
 const MAX_TURNS = 15;
+const RESULT_DELAY = 2000;
 
 const EMPTY = 0;
 const P1 = 1;
@@ -32,17 +33,12 @@ const WEAK_P2 = 4;
 // ==========================
 // 状態
 // ==========================
-let board = new Array(SIZE * SIZE).fill(EMPTY);
-let currentPlayer = P1;
+let board;
+let currentPlayer;
+let turnsLeft;
 
-let turnsLeft = {
-  [P1]: MAX_TURNS,
-  [P2]: MAX_TURNS,
-};
-
-// クールダウン管理
-let cooldownIndexes = [];
-let cooldownOwner = null;
+let cooldownIndexes;
+let cooldownOwner;
 
 // ==========================
 // DOM
@@ -52,17 +48,50 @@ const playerAEl = document.getElementById("playerA");
 const playerBEl = document.getElementById("playerB");
 const countAEl = document.getElementById("countA");
 const countBEl = document.getElementById("countB");
-const resultEl = document.getElementById("result");
+
+// ==========================
+// モーダル生成
+// ==========================
+const modal = document.createElement("div");
+modal.style.position = "fixed";
+modal.style.inset = "0";
+modal.style.display = "none";
+modal.style.alignItems = "center";
+modal.style.justifyContent = "center";
+modal.style.background = "rgba(0,0,0,0.6)";
+modal.style.zIndex = "999";
+
+const modalContent = document.createElement("div");
+modalContent.style.background = "#fff";
+modalContent.style.padding = "24px 32px";
+modalContent.style.borderRadius = "12px";
+modalContent.style.fontSize = "1.2em";
+modalContent.style.fontWeight = "bold";
+
+modal.appendChild(modalContent);
+document.body.appendChild(modal);
 
 // ==========================
 // 初期化
 // ==========================
 function init() {
+  board = new Array(SIZE * SIZE).fill(EMPTY);
+  currentPlayer = P1;
+
+  turnsLeft = {
+    [P1]: MAX_TURNS,
+    [P2]: MAX_TURNS,
+  };
+
+  cooldownIndexes = [];
+  cooldownOwner = null;
+
   boardEl.innerHTML = "";
 
   board.forEach((_, index) => {
     const cell = document.createElement("div");
     cell.className = "cell";
+    cell.style.opacity = "0.6"; // 空マスは少し透明
     cell.addEventListener("click", () => handleClick(index));
     boardEl.appendChild(cell);
   });
@@ -77,8 +106,6 @@ init();
 // ==========================
 function handleClick(index) {
   if (isGameOver()) return;
-
-  // クールダウン中は操作不可
   if (cooldownIndexes.includes(index)) return;
 
   const targets = getCrossIndexes(index);
@@ -91,15 +118,13 @@ function handleClick(index) {
   if (!acted) return;
 
   setCooldown(targets);
-
   turnsLeft[currentPlayer]--;
   switchTurn();
-
   updateUI();
 }
 
 // ==========================
-// マーキング処理（1マス）
+// マーキング処理
 // ==========================
 function applyMark(index) {
   const state = board[index];
@@ -123,7 +148,7 @@ function applyMark(index) {
 }
 
 // ==========================
-// 十字インデックス取得
+// 十字取得
 // ==========================
 function getCrossIndexes(index) {
   const x = index % SIZE;
@@ -146,7 +171,7 @@ function getCrossIndexes(index) {
 }
 
 // ==========================
-// クールダウン制御
+// クールダウン
 // ==========================
 function setCooldown(indexes) {
   cooldownIndexes = indexes;
@@ -164,7 +189,6 @@ function clearCooldown() {
 function switchTurn() {
   currentPlayer = currentPlayer === P1 ? P2 : P1;
 
-  // 次の自分の番で解除
   if (currentPlayer === cooldownOwner) {
     clearCooldown();
   }
@@ -177,15 +201,22 @@ function updateUI() {
   const cells = document.querySelectorAll(".cell");
 
   board.forEach((state, i) => {
-    cells[i].className = "cell";
+    const cell = cells[i];
+    cell.className = "cell";
 
-    if (state === P1) cells[i].classList.add("p1");
-    if (state === P2) cells[i].classList.add("p2");
-    if (state === WEAK_P1) cells[i].classList.add("p1", "weak");
-    if (state === WEAK_P2) cells[i].classList.add("p2", "weak");
+    if (state === EMPTY) {
+      cell.style.opacity = "0.6";
+    } else {
+      cell.style.opacity = "1";
+    }
+
+    if (state === P1) cell.classList.add("p1");
+    if (state === P2) cell.classList.add("p2");
+    if (state === WEAK_P1) cell.classList.add("p1", "weak");
+    if (state === WEAK_P2) cell.classList.add("p2", "weak");
 
     if (cooldownIndexes.includes(i)) {
-      cells[i].classList.add("cooldown");
+      cell.classList.add("cooldown");
     }
   });
 
@@ -196,21 +227,29 @@ function updateUI() {
   playerBEl.classList.toggle("active", currentPlayer === P2);
 
   if (isGameOver()) {
-    showResult();
+    showResultModal();
   }
 }
 
 // ==========================
-// 勝敗判定
+// 勝敗モーダル
 // ==========================
-function showResult() {
+function showResultModal() {
   const a = board.filter(v => v === P1).length;
   const b = board.filter(v => v === P2).length;
 
-  resultEl.textContent =
+  modalContent.textContent =
     a > b ? "Player A Win" :
     b > a ? "Player B Win" :
     "Draw";
+
+  modal.style.display = "flex";
+
+  setTimeout(() => {
+    modal.style.display = "none";
+    setRandomBackground();
+    init();
+  }, RESULT_DELAY);
 }
 
 // ==========================
