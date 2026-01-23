@@ -203,7 +203,7 @@ function updateUI() {
 }
 
 // ==========================
-// アイコン描画（GIF、丸枠なし、2倍サイズ）
+// アイコン描画（GIF、丸枠なし、2倍サイズ、不透明固定）
 // ==========================
 function drawIcons(cells) {
   [P1, P2].forEach(p => {
@@ -227,6 +227,9 @@ function drawIcons(cells) {
     icon.style.top = "50%";
     icon.style.left = "50%";
     icon.style.transform = "translate(-50%, -50%)";
+
+    // 常に不透明
+    icon.style.opacity = "1";
 
     cells[idx].appendChild(icon);
   });
