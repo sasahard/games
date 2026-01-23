@@ -36,6 +36,7 @@ const WEAK_P2 = 4;
 let board;
 let currentPlayer;
 let turnsLeft;
+let gameOver = false;
 
 let playerPos = {
   [P1]: { x: 0, y: SIZE - 1 },
@@ -62,6 +63,7 @@ function init() {
   board = new Array(SIZE * SIZE).fill(EMPTY);
   currentPlayer = P1;
   turnsLeft = { [P1]: MAX_TURNS, [P2]: MAX_TURNS };
+  gameOver = false;
   clearCooldown();
 
   playerPos[P1] = { x: 0, y: SIZE - 1 };
@@ -94,15 +96,15 @@ window.addEventListener("resize", fixBoardSize);
 // クリック処理
 // ==========================
 function handleClick(index) {
-  const { x, y } = indexToXY(index);
+  if (gameOver) return;
+  if (turnsLeft[currentPlayer] <= 0) return;
 
+  const { x, y } = indexToXY(index);
   if (!isMovable(x, y)) return;
   if (cooldownIndexes.includes(index)) return;
 
-  // 移動確定
   playerPos[currentPlayer] = { x, y };
 
-  // マーキング
   const targets = getCrossIndexes(index);
   let acted = false;
   targets.forEach(i => {
@@ -121,62 +123,14 @@ function consumeTurnAndCheckEnd() {
 
   updateUI();
 
-  // ★ 両者0になった瞬間に必ず終了
   if (turnsLeft[P1] === 0 && turnsLeft[P2] === 0) {
+    gameOver = true;
     showResult();
     return;
   }
 
   switchTurn();
   updateUI();
-}
-
-// ==========================
-// マーキング
-// ==========================
-function applyMark(index) {
-  const state = board[index];
-
-  if (state === EMPTY) {
-    board[index] = currentPlayer;
-    return true;
-  }
-  if (state === opponentTerritory()) {
-    board[index] = opponentWeak();
-    return true;
-  }
-  if (state === opponentWeak()) {
-    board[index] = currentPlayer;
-    return true;
-  }
-  return false;
-}
-
-// ==========================
-// 十字取得
-// ==========================
-function getCrossIndexes(index) {
-  const { x, y } = indexToXY(index);
-  const pos = [
-    { x, y },
-    { x, y: y - 1 },
-    { x, y: y + 1 },
-    { x: x - 1, y },
-    { x: x + 1, y }
-  ];
-
-  return pos
-    .filter(p => p.x >= 0 && p.x < SIZE && p.y >= 0 && p.y < SIZE)
-    .map(p => xyToIndex(p.x, p.y));
-}
-
-// ==========================
-// 移動可能判定
-// ==========================
-function isMovable(x, y) {
-  const p = playerPos[currentPlayer];
-  const dist = Math.abs(x - p.x) + Math.abs(y - p.y);
-  return dist <= MOVE_RANGE;
 }
 
 // ==========================
@@ -213,7 +167,7 @@ function updateUI() {
 }
 
 // ==========================
-// アイコン描画
+// アイコン描画（CSS前提で確実表示）
 // ==========================
 function drawIcons(cells) {
   [P1, P2].forEach(p => {
@@ -221,8 +175,7 @@ function drawIcons(cells) {
     const idx = xyToIndex(x, y);
 
     const icon = document.createElement("div");
-    icon.className = p === P1 ? "p1-icon" : "p2-icon";
-    icon.style.backgroundImage = `url("images/dog.gif")`;
+    icon.className = `icon ${p === P1 ? "p1-icon" : "p2-icon"}`;
 
     cells[idx].appendChild(icon);
   });
@@ -276,6 +229,29 @@ function indexToXY(i) {
 }
 function xyToIndex(x, y) {
   return y * SIZE + x;
+}
+function isMovable(x, y) {
+  const p = playerPos[currentPlayer];
+  return Math.abs(x - p.x) + Math.abs(y - p.y) <= MOVE_RANGE;
+}
+function getCrossIndexes(index) {
+  const { x, y } = indexToXY(index);
+  return [
+    { x, y },
+    { x, y: y - 1 },
+    { x, y: y + 1 },
+    { x: x - 1, y },
+    { x: x + 1, y }
+  ]
+    .filter(p => p.x >= 0 && p.x < SIZE && p.y >= 0 && p.y < SIZE)
+    .map(p => xyToIndex(p.x, p.y));
+}
+function applyMark(index) {
+  const state = board[index];
+  if (state === EMPTY) return (board[index] = currentPlayer), true;
+  if (state === opponentTerritory()) return (board[index] = opponentWeak()), true;
+  if (state === opponentWeak()) return (board[index] = currentPlayer), true;
+  return false;
 }
 function opponentTerritory() {
   return currentPlayer === P1 ? P2 : P1;
