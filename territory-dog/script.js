@@ -18,14 +18,14 @@ function setRandomBackground() {
   };
   img.src = url;
 }
-
 setRandomBackground();
 
 // ==========================
 // 定数
 // ==========================
-const SIZE = 10;
+const SIZE = 9;
 const MAX_TURNS = 15;
+const MOVE_RANGE = 2;
 
 const EMPTY = 0;
 const P1 = 1;
@@ -44,9 +44,14 @@ let turnsLeft = {
   [P2]: MAX_TURNS,
 };
 
-// クールダウン管理
 let cooldownIndexes = [];
 let cooldownOwner = null;
+
+// プレイヤー位置
+let playerPos = {
+  [P1]: { x: 0, y: SIZE - 1 },
+  [P2]: { x: SIZE - 1, y: 0 }
+};
 
 // ==========================
 // DOM
@@ -63,33 +68,42 @@ const resultModalEl = document.getElementById("resultModal");
 // ==========================
 function init() {
   boardEl.innerHTML = "";
-
   board = new Array(SIZE * SIZE).fill(EMPTY);
   currentPlayer = P1;
+
   turnsLeft[P1] = MAX_TURNS;
   turnsLeft[P2] = MAX_TURNS;
+
   clearCooldown();
 
-  board.forEach((_, index) => {
+  playerPos[P1] = { x: 0, y: SIZE - 1 };
+  playerPos[P2] = { x: SIZE - 1, y: 0 };
+
+  for (let i = 0; i < SIZE * SIZE; i++) {
     const cell = document.createElement("div");
     cell.className = "cell";
-    cell.addEventListener("click", () => handleClick(index));
+    cell.addEventListener("click", () => handleClick(i));
     boardEl.appendChild(cell);
-  });
+  }
 
   updateUI();
 }
-
 init();
 
 // ==========================
-// クリック処理（十字マーキング）
+// クリック処理
 // ==========================
 function handleClick(index) {
   if (isGameOver()) return;
-
-  // クールダウン中は操作不可
   if (cooldownIndexes.includes(index)) return;
+
+  const x = index % SIZE;
+  const y = Math.floor(index / SIZE);
+
+  if (!isMovableRange(x, y)) return;
+
+  // プレイヤー移動
+  playerPos[currentPlayer] = { x, y };
 
   const targets = getCrossIndexes(index);
   let acted = false;
@@ -101,15 +115,21 @@ function handleClick(index) {
   if (!acted) return;
 
   setCooldown(targets);
-
   turnsLeft[currentPlayer]--;
   switchTurn();
-
   updateUI();
 }
 
 // ==========================
-// マーキング処理（1マス）
+// 移動可能範囲判定（ダイヤ）
+// ==========================
+function isMovableRange(x, y) {
+  const p = playerPos[currentPlayer];
+  return Math.abs(p.x - x) + Math.abs(p.y - y) <= MOVE_RANGE;
+}
+
+// ==========================
+// マーキング
 // ==========================
 function applyMark(index) {
   const state = board[index];
@@ -133,7 +153,7 @@ function applyMark(index) {
 }
 
 // ==========================
-// 十字インデックス取得
+// 十字インデックス
 // ==========================
 function getCrossIndexes(index) {
   const x = index % SIZE;
@@ -156,7 +176,7 @@ function getCrossIndexes(index) {
 }
 
 // ==========================
-// クールダウン制御
+// クールダウン
 // ==========================
 function setCooldown(indexes) {
   cooldownIndexes = indexes;
@@ -173,8 +193,6 @@ function clearCooldown() {
 // ==========================
 function switchTurn() {
   currentPlayer = currentPlayer === P1 ? P2 : P1;
-
-  // 次の自分の番で解除
   if (currentPlayer === cooldownOwner) {
     clearCooldown();
   }
@@ -187,17 +205,29 @@ function updateUI() {
   const cells = document.querySelectorAll(".cell");
 
   board.forEach((state, i) => {
-    cells[i].className = "cell";
+    const cell = cells[i];
+    cell.className = "cell";
 
-    if (state === P1) cells[i].classList.add("p1");
-    if (state === P2) cells[i].classList.add("p2");
-    if (state === WEAK_P1) cells[i].classList.add("p1", "weak");
-    if (state === WEAK_P2) cells[i].classList.add("p2", "weak");
+    if (state === P1) cell.classList.add("p1");
+    if (state === P2) cell.classList.add("p2");
+    if (state === WEAK_P1) cell.classList.add("p1", "weak");
+    if (state === WEAK_P2) cell.classList.add("p2", "weak");
+
+    const x = i % SIZE;
+    const y = Math.floor(i / SIZE);
+
+    if (isMovableRange(x, y)) {
+      cell.classList.add("movable");
+    }
 
     if (cooldownIndexes.includes(i)) {
-      cells[i].classList.add("cooldown");
+      cell.classList.add("cooldown");
     }
   });
+
+  // プレイヤー表示
+  placePlayerIcon(playerAEl, playerPos[P1]);
+  placePlayerIcon(playerBEl, playerPos[P2]);
 
   countAEl.textContent = `残り ${turnsLeft[P1]}`;
   countBEl.textContent = `残り ${turnsLeft[P2]}`;
@@ -205,13 +235,20 @@ function updateUI() {
   playerAEl.classList.toggle("active", currentPlayer === P1);
   playerBEl.classList.toggle("active", currentPlayer === P2);
 
-  if (isGameOver()) {
-    showResult();
-  }
+  if (isGameOver()) showResult();
 }
 
 // ==========================
-// 勝敗判定（モーダル）
+// プレイヤー配置
+// ==========================
+function placePlayerIcon(el, pos) {
+  const size = boardEl.clientWidth / SIZE;
+  el.style.left = `${pos.x * size}px`;
+  el.style.top = `${pos.y * size}px`;
+}
+
+// ==========================
+// 勝敗
 // ==========================
 function showResult() {
   const a = board.filter(v => v === P1).length;
@@ -227,7 +264,7 @@ function showResult() {
 
   setTimeout(() => {
     resultModalEl.classList.remove("show");
-    init(); // 次の試合へ
+    init();
   }, 2000);
 }
 
