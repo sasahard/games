@@ -203,18 +203,30 @@ function updateUI() {
 }
 
 // ==========================
-// アイコン描画（GIF対応版）
+// アイコン描画（GIF、丸枠なし、2倍サイズ）
+// ==========================
 function drawIcons(cells) {
   [P1, P2].forEach(p => {
     const { x, y } = playerPos[p];
     const idx = xyToIndex(x, y);
 
     const icon = document.createElement("div");
-    icon.className = `icon ${p === P1 ? "p1-icon" : "p2-icon"}`;
-    icon.style.backgroundImage = `url("images/dog.gif")`; // GIF反映
+    icon.className = p === P1 ? "p1-icon" : "p2-icon";
+
+    icon.style.backgroundImage = `url("images/dog.gif")`;
     icon.style.backgroundSize = "contain";
     icon.style.backgroundRepeat = "no-repeat";
     icon.style.backgroundPosition = "center";
+
+    // マス基準で2倍サイズ
+    icon.style.width = "40px";
+    icon.style.height = "40px";
+
+    // マス中央に配置
+    icon.style.position = "absolute";
+    icon.style.top = "50%";
+    icon.style.left = "50%";
+    icon.style.transform = "translate(-50%, -50%)";
 
     cells[idx].appendChild(icon);
   });
