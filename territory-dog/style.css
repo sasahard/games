@@ -56,18 +56,20 @@ body {
   transform: scale(0.95);
 }
 
-/* プレイヤー色 */
+/* プレイヤー色（自然な尿マーキングイメージ） */
 .cell.p1 {
-  background: #4a90e2;
+  background: #FFD54F; /* 黄色系 */
 }
-
 .cell.p2 {
-  background: #e94a4a;
+  background: #81C784; /* 緑系 */
 }
 
 /* 弱体マス */
-.cell.weak {
-  opacity: 0.5;
+.cell.weak.p1 {
+  background: rgba(255, 213, 79, 0.5);
+}
+.cell.weak.p2 {
+  background: rgba(129, 199, 132, 0.5);
 }
 
 /* クールダウン */
@@ -86,27 +88,28 @@ body {
    プレイヤーアイコン（切り抜きGIF対応）
 ========================== */
 .icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-
-  /* 背景色不要、GIF画像を直接 */
-  background-size: cover;
+  /* マス基準で2倍サイズに調整はJSで */
+  background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
 
-  box-shadow:
-    0 0 0 2px rgba(0, 0, 0, 0.4),
-    0 0 6px rgba(255, 255, 255, 0.6);
-
   pointer-events: none;
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  width: 40px;
+  height: 40px;
+
+  z-index: 1; /* マスの背景より前に表示 */
 }
 
 /* プレイヤーごとのGIF指定 */
 .p1-icon {
   background-image: url("images/dog.gif");
 }
-
 .p2-icon {
   background-image: url("images/dog.gif");
 }
@@ -165,18 +168,18 @@ body {
 
 /* Player A */
 #playerA.active {
-  background: rgba(74, 144, 226, 0.35);
+  background: rgba(255, 213, 79, 0.35);
 }
 #playerA.active::before {
-  background: #4a90e2;
+  background: #FFD54F;
 }
 
 /* Player B */
 #playerB.active {
-  background: rgba(233, 74, 74, 0.35);
+  background: rgba(129, 199, 132, 0.35);
 }
 #playerB.active::before {
-  background: #e94a4a;
+  background: #81C784;
 }
 
 /* テキスト */
