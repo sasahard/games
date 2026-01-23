@@ -3,10 +3,7 @@
 ========================== */
 body {
   font-family: "Trebuchet MS", system-ui, sans-serif;
-
-  /* 背景はJSで設定 */
-  background-color: #000;
-
+  background: #000;
   margin: 0;
   min-height: 100vh;
 
@@ -15,9 +12,7 @@ body {
   align-items: center;
   justify-content: center;
 
-  padding-bottom: 80px; /* 下部INFO分 */
-
-  overscroll-behavior: none;
+  padding-bottom: 80px;
 }
 
 /* ==========================
@@ -28,11 +23,6 @@ body {
   grid-template-columns: repeat(10, 1fr);
   gap: 4px;
   width: min(90vw, 420px);
-
-  padding: 6px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(2px);
 }
 
 /* ==========================
@@ -40,13 +30,11 @@ body {
 ========================== */
 .cell {
   aspect-ratio: 1 / 1;
-  background: rgba(220, 220, 220, 0.9);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 6px;
   cursor: pointer;
-
-  transition: transform 0.05s;
-
-  box-sizing: border-box;
+  transition: transform 0.05s, background 0.2s, opacity 0.2s;
+  backdrop-filter: blur(2px);
 }
 
 .cell:active {
@@ -54,26 +42,25 @@ body {
 }
 
 .cell.p1 {
-  background: #4a90e2;
+  background: rgba(74, 144, 226, 0.85);
 }
 
 .cell.p2 {
-  background: #e94a4a;
+  background: rgba(233, 74, 74, 0.85);
 }
 
 .cell.weak {
   opacity: 0.5;
 }
 
-/* クールダウン（点線枠） */
+/* クールダウン（点線） */
 .cell.cooldown {
-  outline: 2px dashed rgba(255, 255, 255, 0.75);
-  outline-offset: -2px;
-  cursor: not-allowed;
+  outline: 2px dashed rgba(255, 255, 255, 0.9);
+  outline-offset: -4px;
 }
 
 /* ==========================
-   下部INFO UI
+   下部INFO UI（半透明化）
 ========================== */
 #info {
   position: fixed;
@@ -83,12 +70,14 @@ body {
   height: 64px;
 
   display: flex;
-  background: rgba(0, 0, 0, 0.85);
-  color: #fff;
+  gap: 1px;
 
-  backdrop-filter: blur(4px);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(6px);
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
 }
 
+/* プレイヤー枠 */
 .player {
   flex: 1;
   display: flex;
@@ -96,39 +85,35 @@ body {
   justify-content: center;
   align-items: center;
 
-  opacity: 0.4;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+
+  opacity: 0.5;
   transition: opacity 0.2s, background 0.2s;
 }
 
+/* アクティブ時 */
 .player.active {
   opacity: 1;
 }
 
+/* Player A */
 #playerA.active {
-  background: #4a90e2;
+  background: rgba(74, 144, 226, 0.45);
 }
 
+/* Player B */
 #playerB.active {
-  background: #e94a4a;
+  background: rgba(233, 74, 74, 0.45);
 }
 
 .label {
-  font-size: 0.85em;
-  letter-spacing: 0.05em;
+  font-size: 0.8em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .count {
   font-size: 0.75em;
-  opacity: 0.8;
-}
-
-/* ==========================
-   結果表示
-========================== */
-#result {
-  font-weight: bold;
-  margin-bottom: 72px;
-  color: #fff;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  opacity: 0.85;
 }
