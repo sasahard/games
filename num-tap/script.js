@@ -36,7 +36,7 @@ function resizeCanvas() {
 window.addEventListener("resize", resizeCanvas);
 
 // ==========================
-// 初期化（待機状態）
+// 初期化（完全待機）
 // ==========================
 function resetGame() {
   resizeCanvas();
@@ -70,47 +70,56 @@ function shuffle(arr) {
 }
 
 // ==========================
-// 丸ボタン描画
+// 丸ボタン描画（リアルグロー）
 // ==========================
 function drawButton(cx, cy, r, num, pressed, cleared) {
-  // 影
-  ctx.fillStyle = "rgba(0,0,0,0.4)";
+  const yOffset = pressed ? 4 : 0;
+
+  // --- 影 ---
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "rgba(0,0,0,0.45)";
   ctx.beginPath();
-  ctx.arc(cx, cy + 8, r, 0, Math.PI * 2);
+  ctx.arc(cx, cy + r * 0.4 + 6, r, 0, Math.PI * 2);
   ctx.fill();
 
-  // 本体
-  let grad;
+  // --- 発光（クリア済み）---
   if (cleared) {
-    grad = ctx.createRadialGradient(cx, cy, r * 0.2, cx, cy, r);
-    grad.addColorStop(0, "#ffffcc");
-    grad.addColorStop(1, "#ffcc33");
+    ctx.shadowColor = "rgba(255,220,120,0.9)";
+    ctx.shadowBlur = 28;
   } else {
-    grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.2, cx, cy, r);
+    ctx.shadowBlur = 0;
+  }
+
+  // --- 本体 ---
+  const grad = ctx.createRadialGradient(
+    cx - r * 0.3,
+    cy - r * 0.4,
+    r * 0.2,
+    cx,
+    cy,
+    r
+  );
+
+  if (cleared) {
+    grad.addColorStop(0, "#fff9e0");
+    grad.addColorStop(1, "#ffb400");
+  } else {
     grad.addColorStop(0, "#ffffff");
-    grad.addColorStop(1, "#9a9a9a");
+    grad.addColorStop(1, "#9b9b9b");
   }
 
   ctx.fillStyle = grad;
   ctx.beginPath();
-  ctx.arc(cx, cy + (pressed ? 4 : 0), r, 0, Math.PI * 2);
+  ctx.arc(cx, cy + yOffset, r, 0, Math.PI * 2);
   ctx.fill();
 
-  // 発光（クリア済み）
-  if (cleared) {
-    ctx.strokeStyle = "rgba(255,255,200,0.9)";
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  // 数字
-  ctx.fillStyle = cleared ? "#664400" : "#222";
+  // --- 数字 ---
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = cleared ? "#6b4a00" : "#222";
   ctx.font = `bold ${r}px system-ui, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(num, cx, cy + (pressed ? 4 : 0));
+  ctx.fillText(num, cx, cy + yOffset);
 }
 
 // ==========================
@@ -138,8 +147,8 @@ function draw() {
     );
   });
 
-  // 待機・終了メッセージ
-  if (gameState !== "playing") {
+  // 初回だけ表示される案内
+  if (gameState === "idle") {
     ctx.fillStyle = "rgba(0,0,0,0.55)";
     ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
@@ -148,7 +157,7 @@ function draw() {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(
-      gameState === "idle" ? "TAP TO START" : "TAP TO RETRY",
+      "TAP ANYWHERE TO START",
       canvas.clientWidth / 2,
       canvas.clientHeight / 2
     );
@@ -163,15 +172,18 @@ canvas.addEventListener("pointerdown", (e) => {
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
 
+  // idle → playing（このタップをそのまま使う）
   if (gameState === "idle") {
     startGame();
-    return;
   }
 
+  // finished → reset
   if (gameState === "finished") {
     resetGame();
     return;
   }
+
+  if (gameState !== "playing") return;
 
   const cell = canvas.clientWidth / GRID_SIZE;
   const col = Math.floor(x / cell);
