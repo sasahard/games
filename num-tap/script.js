@@ -3,7 +3,7 @@
 // ==========================
 const GRID_SIZE = 5;
 const TOTAL_NUMBERS = GRID_SIZE * GRID_SIZE;
-const PENALTY_TIME = 1.0; // ミス時の加算秒
+const PENALTY_TIME = 1.0;
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -15,14 +15,8 @@ let startTime = 0;
 let penalty = 0;
 let isFinished = false;
 
-// Canvas上のRETRYボタン
-const retryButton = {
-  x: 0,
-  y: 0,
-  width: 0,
-  height: 0,
-  pressed: false
-};
+// 押下状態管理
+let pressedIndex = null;
 
 // ==========================
 // Canvasサイズ調整
@@ -45,14 +39,14 @@ function initGame() {
   currentNumber = 1;
   penalty = 0;
   isFinished = false;
-  retryButton.pressed = false;
+  pressedIndex = null;
   startTime = performance.now();
   requestAnimationFrame(update);
   draw();
 }
 
 // ==========================
-// 数字シャッフル
+// シャッフル
 // ==========================
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -63,94 +57,78 @@ function shuffle(array) {
 }
 
 // ==========================
-// 描画処理（メイン）
+// 描画
 // ==========================
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  drawGrid();
-
-  if (isFinished) {
-    drawFinishOverlay();
-    drawRetryButton();
-  }
-}
-
-// ==========================
-// グリッド描画
-// ==========================
-function drawGrid() {
   const cellSize = canvas.clientWidth / GRID_SIZE;
 
   numbers.forEach((num, index) => {
     const x = (index % GRID_SIZE) * cellSize;
     const y = Math.floor(index / GRID_SIZE) * cellSize;
 
-    ctx.fillStyle = "#333";
-    ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+    const isPressed = index === pressedIndex;
+    const isCleared = num < currentNumber;
 
-    ctx.fillStyle = "#fff";
-    ctx.font = `${cellSize * 0.4}px sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(num, x + cellSize / 2, y + cellSize / 2);
+    // 本体
+    ctx.fillStyle = isCleared ? "#222" : "#444";
+    ctx.fillRect(
+      x + 2,
+      y + 2 + (isPressed ? 4 : 0),
+      cellSize - 4,
+      cellSize - 4
+    );
+
+    // ハイライト
+    if (!isPressed && !isCleared) {
+      ctx.fillStyle = "rgba(255,255,255,0.15)";
+      ctx.fillRect(x + 2, y + 2, cellSize - 4, cellSize * 0.35);
+    }
+
+    // 数字
+    if (!isCleared) {
+      ctx.fillStyle = "#fff";
+      ctx.font = `bold ${cellSize * 0.42}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(num, x + cellSize / 2, y + cellSize / 2);
+    }
   });
+
+  if (isFinished) {
+    drawFinishOverlay();
+  }
 }
 
 // ==========================
-// 終了時オーバーレイ
+// 終了オーバーレイ
 // ==========================
 function drawFinishOverlay() {
-  ctx.fillStyle = "rgba(0,0,0,0.6)";
+  ctx.fillStyle = "rgba(0,0,0,0.65)";
   ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
   ctx.fillStyle = "#fff";
-  ctx.font = "bold 24px sans-serif";
+  ctx.font = "bold 26px sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(
     `TIME ${timerEl.textContent}s`,
     canvas.clientWidth / 2,
-    canvas.clientHeight * 0.35
+    canvas.clientHeight / 2
+  );
+
+  ctx.font = "14px sans-serif";
+  ctx.fillStyle = "#aaa";
+  ctx.fillText(
+    "TAP TO RESTART",
+    canvas.clientWidth / 2,
+    canvas.clientHeight / 2 + 36
   );
 }
 
 // ==========================
-// RETRYボタン描画（立体）
-// ==========================
-function drawRetryButton() {
-  const w = canvas.clientWidth * 0.55;
-  const h = canvas.clientWidth * 0.14;
-  const x = (canvas.clientWidth - w) / 2;
-  const y = canvas.clientHeight * 0.55;
-
-  retryButton.x = x;
-  retryButton.y = y;
-  retryButton.width = w;
-  retryButton.height = h;
-
-  // 本体
-  ctx.fillStyle = retryButton.pressed ? "#444" : "#666";
-  ctx.fillRect(x, y, w, h);
-
-  // ハイライト
-  ctx.fillStyle = "rgba(255,255,255,0.18)";
-  ctx.fillRect(x, y, w, h * 0.35);
-
-  // 影
-  ctx.fillStyle = "rgba(0,0,0,0.4)";
-  ctx.fillRect(x, y + h - 6, w, 6);
-
-  // テキスト
-  ctx.fillStyle = "#fff";
-  ctx.font = `bold ${h * 0.45}px sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("RETRY", x + w / 2, y + h / 2);
-}
-
-// ==========================
-// 入力判定
+// 入力
 // ==========================
 canvas.addEventListener("pointerdown", (e) => {
   const rect = canvas.getBoundingClientRect();
@@ -158,15 +136,7 @@ canvas.addEventListener("pointerdown", (e) => {
   const y = e.clientY - rect.top;
 
   if (isFinished) {
-    if (
-      x >= retryButton.x &&
-      x <= retryButton.x + retryButton.width &&
-      y >= retryButton.y &&
-      y <= retryButton.y + retryButton.height
-    ) {
-      retryButton.pressed = true;
-      draw();
-    }
+    initGame();
     return;
   }
 
@@ -175,45 +145,39 @@ canvas.addEventListener("pointerdown", (e) => {
   const row = Math.floor(y / cellSize);
   const index = row * GRID_SIZE + col;
 
-  const tappedNumber = numbers[index];
+  pressedIndex = index;
+  draw();
+});
+
+canvas.addEventListener("pointerup", () => {
+  if (pressedIndex === null || isFinished) return;
+
+  const tappedNumber = numbers[pressedIndex];
 
   if (tappedNumber === currentNumber) {
     currentNumber++;
     if (currentNumber > TOTAL_NUMBERS) {
-      finishGame();
+      isFinished = true;
     }
   } else {
     penalty += PENALTY_TIME;
   }
-});
 
-canvas.addEventListener("pointerup", () => {
-  if (retryButton.pressed) {
-    retryButton.pressed = false;
-    initGame();
-  }
+  pressedIndex = null;
+  draw();
 });
 
 // ==========================
-// タイマー更新
+// タイマー
 // ==========================
 function update() {
-  if (isFinished) return;
-
-  const now = performance.now();
-  const elapsed = (now - startTime) / 1000 + penalty;
-  timerEl.textContent = elapsed.toFixed(3);
-
-  draw();
-  requestAnimationFrame(update);
-}
-
-// ==========================
-// ゲーム終了
-// ==========================
-function finishGame() {
-  isFinished = true;
-  draw();
+  if (!isFinished) {
+    const now = performance.now();
+    const elapsed = (now - startTime) / 1000 + penalty;
+    timerEl.textContent = elapsed.toFixed(3);
+    draw();
+    requestAnimationFrame(update);
+  }
 }
 
 // ==========================
