@@ -5,7 +5,9 @@ body {
   margin: 0;
   background: #111;
   color: #fff;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* レトロ競技感フォント */
+  font-family: "Press Start 2P", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 
   display: flex;
   justify-content: center;
@@ -29,26 +31,27 @@ body {
    ヘッダー
    ========================== */
 header {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 header h1 {
   margin: 0;
-  font-size: 1.6rem;
-  letter-spacing: 0.12em;
+  font-size: 1.4rem;
+  letter-spacing: 0.18em;
 }
 
 header .description {
-  margin: 4px 0 8px;
-  font-size: 0.75rem;
+  margin: 6px 0 10px;
+  font-size: 0.7rem;
   color: #aaa;
+  line-height: 1.6;
 }
 
 /* ==========================
    タイマー表示（最重要）
    ========================== */
 #timer {
-  font-size: 2.4rem;
+  font-size: 2.2rem;
   margin: 10px auto 14px;
 
   /* 数字のガタつき完全防止 */
@@ -59,15 +62,15 @@ header .description {
   width: 8ch;
   text-align: center;
 
-  /* 競技デバイス風の立体感 */
-  background: linear-gradient(#333, #111);
+  /* レトロデバイス風パネル */
+  background: linear-gradient(#2a2a2a, #0f0f0f);
   border-radius: 8px;
-  padding: 8px 0;
+  padding: 10px 0;
 
   box-shadow:
     inset 0 2px 2px rgba(255, 255, 255, 0.15),
-    inset 0 -2px 2px rgba(0, 0, 0, 0.6),
-    0 4px 8px rgba(0, 0, 0, 0.6);
+    inset 0 -2px 3px rgba(0, 0, 0, 0.7),
+    0 4px 10px rgba(0, 0, 0, 0.7);
 }
 
 /* ==========================
@@ -77,21 +80,20 @@ canvas {
   width: 100%;
   aspect-ratio: 1 / 1;
   background: #222;
-  border-radius: 12px;
+  border-radius: 14px;
 
   /* タップ操作を快適に */
   touch-action: manipulation;
 
-  /* デバイス感を出す影 */
+  /* 競技デバイス感 */
   box-shadow:
-    inset 0 1px 2px rgba(255,255,255,0.1),
-    inset 0 -2px 4px rgba(0,0,0,0.6),
-    0 6px 12px rgba(0,0,0,0.8);
+    inset 0 1px 2px rgba(255,255,255,0.08),
+    inset 0 -3px 6px rgba(0,0,0,0.7),
+    0 8px 16px rgba(0,0,0,0.85);
 }
 
 /* ==========================
-   HTML側の結果UIはMVP後に撤去前提
-   （Canvasに統一するため非表示）
+   MVPではHTML側UIを完全停止
    ========================== */
 #result,
 #retry {
