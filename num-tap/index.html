@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NUM TAP</title>
+  <meta name="description" content="1から順に数字をタップするスピード記憶ゲーム。最速タイムを目指そう。" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ゲーム全体コンテナ -->
+  <div id="game-container">
+
+    <!-- ヘッダー -->
+    <header id="header">
+      <h1>NUM TAP</h1>
+      <p class="description">
+        Tap numbers from 1 to 25 as fast as you can.
+      </p>
+    </header>
+
+    <!-- タイマー表示 -->
+    <div id="timer">0.000</div>
+
+    <!-- ゲーム描画用Canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- 結果表示 -->
+    <div id="result" class="hidden">
+      <p id="result-time"></p>
+      <button id="retry">RETRY</button>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
