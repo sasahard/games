@@ -70,7 +70,7 @@ function shuffle(arr) {
 }
 
 // ==========================
-// 丸ボタン描画（リアルグロー）
+// 丸ボタン描画（強リアルグロー）
 // ==========================
 function drawButton(cx, cy, r, num, pressed, cleared) {
   const yOffset = pressed ? 4 : 0;
@@ -79,21 +79,21 @@ function drawButton(cx, cy, r, num, pressed, cleared) {
   ctx.shadowBlur = 0;
   ctx.fillStyle = "rgba(0,0,0,0.45)";
   ctx.beginPath();
-  ctx.arc(cx, cy + r * 0.4 + 6, r, 0, Math.PI * 2);
+  ctx.arc(cx, cy + r * 0.5 + 8, r, 0, Math.PI * 2);
   ctx.fill();
 
-  // --- 発光（クリア済み）---
+  // --- 外側グロー（クリア済み）---
   if (cleared) {
-    ctx.shadowColor = "rgba(255,220,120,0.9)";
-    ctx.shadowBlur = 28;
+    ctx.shadowColor = "rgba(255,200,80,0.8)";
+    ctx.shadowBlur = 36;
   } else {
     ctx.shadowBlur = 0;
   }
 
   // --- 本体 ---
   const grad = ctx.createRadialGradient(
-    cx - r * 0.3,
-    cy - r * 0.4,
+    cx - r * 0.35,
+    cy - r * 0.45,
     r * 0.2,
     cx,
     cy,
@@ -101,11 +101,11 @@ function drawButton(cx, cy, r, num, pressed, cleared) {
   );
 
   if (cleared) {
-    grad.addColorStop(0, "#fff9e0");
-    grad.addColorStop(1, "#ffb400");
+    grad.addColorStop(0, "#fff6d8");
+    grad.addColorStop(1, "#ff9f00");
   } else {
     grad.addColorStop(0, "#ffffff");
-    grad.addColorStop(1, "#9b9b9b");
+    grad.addColorStop(1, "#9a9a9a");
   }
 
   ctx.fillStyle = grad;
@@ -113,13 +113,24 @@ function drawButton(cx, cy, r, num, pressed, cleared) {
   ctx.arc(cx, cy + yOffset, r, 0, Math.PI * 2);
   ctx.fill();
 
+  // --- 内側グロー ---
+  if (cleared) {
+    ctx.shadowColor = "rgba(255,255,200,0.9)";
+    ctx.shadowBlur = 16;
+    ctx.strokeStyle = "rgba(255,255,220,0.8)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy + yOffset, r - 2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
   // --- 数字 ---
   ctx.shadowBlur = 0;
-  ctx.fillStyle = cleared ? "#6b4a00" : "#222";
-  ctx.font = `bold ${r}px system-ui, sans-serif`;
+  ctx.fillStyle = cleared ? "#6a4300" : "#222";
+  ctx.font = `bold ${r * 0.9}px "Press Start 2P", system-ui`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(num, cx, cy + yOffset);
+  ctx.fillText(num, cx, cy + yOffset + 1);
 }
 
 // ==========================
@@ -147,17 +158,17 @@ function draw() {
     );
   });
 
-  // 初回だけ表示される案内
+  // --- 初回スタート案内 ---
   if (gameState === "idle") {
     ctx.fillStyle = "rgba(0,0,0,0.55)";
     ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
     ctx.fillStyle = "#fff";
-    ctx.font = "bold 22px system-ui";
+    ctx.font = '20px "Press Start 2P"';
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(
-      "TAP ANYWHERE TO START",
+      "TAP TO START",
       canvas.clientWidth / 2,
       canvas.clientHeight / 2
     );
@@ -172,12 +183,12 @@ canvas.addEventListener("pointerdown", (e) => {
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
 
-  // idle → playing（このタップをそのまま使う）
+  // idle → playing（このタップをそのまま有効化）
   if (gameState === "idle") {
     startGame();
   }
 
-  // finished → reset
+  // finished → リトライ
   if (gameState === "finished") {
     resetGame();
     return;
