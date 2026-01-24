@@ -1,25 +1,29 @@
 // ==========================
-// 定数・初期設定
+// 定数
 // ==========================
 const GRID_SIZE = 5;
 const TOTAL_NUMBERS = GRID_SIZE * GRID_SIZE;
 const PENALTY_TIME = 1.0;
 
+// ==========================
+// DOM
+// ==========================
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const timerEl = document.getElementById("timer");
 
+// ==========================
+// 状態
+// ==========================
 let numbers = [];
 let currentNumber = 1;
 let startTime = 0;
 let penalty = 0;
 let isFinished = false;
-
-// 押下状態管理
 let pressedIndex = null;
 
 // ==========================
-// Canvasサイズ調整
+// Canvasリサイズ
 // ==========================
 function resizeCanvas() {
   const size = canvas.clientWidth;
@@ -31,7 +35,7 @@ function resizeCanvas() {
 window.addEventListener("resize", resizeCanvas);
 
 // ==========================
-// ゲーム初期化
+// 初期化
 // ==========================
 function initGame() {
   resizeCanvas();
@@ -48,12 +52,49 @@ function initGame() {
 // ==========================
 // シャッフル
 // ==========================
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
+    [arr[i], arr[j]] = [arr[j], arr[i]];
   }
-  return array;
+  return arr;
+}
+
+// ==========================
+// 丸ボタン描画（立体）
+// ==========================
+function drawButton(cx, cy, r, num, pressed, cleared) {
+  if (cleared) return;
+
+  // 影
+  ctx.fillStyle = "rgba(0,0,0,0.4)";
+  ctx.beginPath();
+  ctx.arc(cx, cy + 8, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 本体グラデーション
+  const grad = ctx.createRadialGradient(
+    cx - r * 0.3,
+    cy - r * 0.3,
+    r * 0.2,
+    cx,
+    cy,
+    r
+  );
+  grad.addColorStop(0, pressed ? "#e0e0e0" : "#ffffff");
+  grad.addColorStop(1, "#9a9a9a");
+
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy + (pressed ? 4 : 0), r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 数字
+  ctx.fillStyle = "#222";
+  ctx.font = `bold ${r}px system-ui, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(num, cx, cy + (pressed ? 4 : 0));
 }
 
 // ==========================
@@ -62,88 +103,42 @@ function shuffle(array) {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const cellSize = canvas.clientWidth / GRID_SIZE;
+  const cell = canvas.clientWidth / GRID_SIZE;
+  const radius = cell * 0.36;
 
-  numbers.forEach((num, index) => {
-    const x = (index % GRID_SIZE) * cellSize;
-    const y = Math.floor(index / GRID_SIZE) * cellSize;
+  numbers.forEach((num, i) => {
+    const col = i % GRID_SIZE;
+    const row = Math.floor(i / GRID_SIZE);
+    const cx = col * cell + cell / 2;
+    const cy = row * cell + cell / 2;
 
-    const isPressed = index === pressedIndex;
-    const isCleared = num < currentNumber;
-
-    // 本体
-    ctx.fillStyle = isCleared ? "#222" : "#444";
-    ctx.fillRect(
-      x + 2,
-      y + 2 + (isPressed ? 4 : 0),
-      cellSize - 4,
-      cellSize - 4
+    drawButton(
+      cx,
+      cy,
+      radius,
+      num,
+      i === pressedIndex,
+      num < currentNumber
     );
-
-    // ハイライト
-    if (!isPressed && !isCleared) {
-      ctx.fillStyle = "rgba(255,255,255,0.15)";
-      ctx.fillRect(x + 2, y + 2, cellSize - 4, cellSize * 0.35);
-    }
-
-    // 数字
-    if (!isCleared) {
-      ctx.fillStyle = "#fff";
-      ctx.font = `bold ${cellSize * 0.42}px sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(num, x + cellSize / 2, y + cellSize / 2);
-    }
   });
-
-  if (isFinished) {
-    drawFinishOverlay();
-  }
-}
-
-// ==========================
-// 終了オーバーレイ
-// ==========================
-function drawFinishOverlay() {
-  ctx.fillStyle = "rgba(0,0,0,0.65)";
-  ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-
-  ctx.fillStyle = "#fff";
-  ctx.font = "bold 26px sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(
-    `TIME ${timerEl.textContent}s`,
-    canvas.clientWidth / 2,
-    canvas.clientHeight / 2
-  );
-
-  ctx.font = "14px sans-serif";
-  ctx.fillStyle = "#aaa";
-  ctx.fillText(
-    "TAP TO RESTART",
-    canvas.clientWidth / 2,
-    canvas.clientHeight / 2 + 36
-  );
 }
 
 // ==========================
 // 入力
 // ==========================
 canvas.addEventListener("pointerdown", (e) => {
+  if (isFinished) return;
+
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
 
-  if (isFinished) {
-    initGame();
-    return;
-  }
-
-  const cellSize = canvas.clientWidth / GRID_SIZE;
-  const col = Math.floor(x / cellSize);
-  const row = Math.floor(y / cellSize);
+  const cell = canvas.clientWidth / GRID_SIZE;
+  const col = Math.floor(x / cell);
+  const row = Math.floor(y / cell);
   const index = row * GRID_SIZE + col;
+
+  if (numbers[index] !== currentNumber) return;
 
   pressedIndex = index;
   draw();
@@ -152,15 +147,10 @@ canvas.addEventListener("pointerdown", (e) => {
 canvas.addEventListener("pointerup", () => {
   if (pressedIndex === null || isFinished) return;
 
-  const tappedNumber = numbers[pressedIndex];
+  currentNumber++;
 
-  if (tappedNumber === currentNumber) {
-    currentNumber++;
-    if (currentNumber > TOTAL_NUMBERS) {
-      isFinished = true;
-    }
-  } else {
-    penalty += PENALTY_TIME;
+  if (currentNumber > TOTAL_NUMBERS) {
+    isFinished = true; // タイマーは自然停止
   }
 
   pressedIndex = null;
@@ -168,16 +158,16 @@ canvas.addEventListener("pointerup", () => {
 });
 
 // ==========================
-// タイマー
+// タイマー更新
 // ==========================
 function update() {
-  if (!isFinished) {
-    const now = performance.now();
-    const elapsed = (now - startTime) / 1000 + penalty;
-    timerEl.textContent = elapsed.toFixed(3);
-    draw();
-    requestAnimationFrame(update);
-  }
+  if (isFinished) return;
+
+  const elapsed =
+    (performance.now() - startTime) / 1000 + penalty;
+
+  timerEl.textContent = elapsed.toFixed(3);
+  requestAnimationFrame(update);
 }
 
 // ==========================
