@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "id": "day01",
+    "title": "帰らない夜"
+  },
+  "scenes": [
+    {
+      "id": "start",
+      "bg": "assets/bg/store_night.png",
+      "character": null,
+      "text": "深夜0時過ぎ。\n蛍光灯の音と、遠くの車の走る音だけが店内に残っている。",
+      "next": "scene01"
+    },
+    {
+      "id": "scene01",
+      "bg": "assets/bg/store_night.png",
+      "character": "assets/characters/businessman.png",
+      "text": "イートインに、見慣れたサラリーマンが座っている。\nカップ麺はもう空だ。",
+      "choices": [
+        { "label": "声をかける", "next": "scene02_a" },
+        { "label": "何も言わない", "next": "scene02_b" }
+      ]
+    },
+    {
+      "id": "scene02_a",
+      "bg": "assets/bg/store_night.png",
+      "character": "assets/characters/businessman.png",
+      "text": "「あの……何時まで大丈夫ですか」\n彼は少しだけ、安心したように笑った。",
+      "next": "ending_a"
+    },
+    {
+      "id": "scene02_b",
+      "bg": "assets/bg/store_night.png",
+      "character": "assets/characters/businessman.png",
+      "text": "あなたはレジを拭きながら、何も言わなかった。\n彼も、何も言わなかった。",
+      "next": "ending_b"
+    }
+  ],
+  "endings": [
+    {
+      "id": "ending_a",
+      "text": "彼は缶コーヒーを買い、軽く会釈して店を出た。\n夜は、少しだけやわらいだ気がした。"
+    },
+    {
+      "id": "ending_b",
+      "text": "気づくと、席は空いていた。\n夜は、何事もなかったように続いていく。"
+    }
+  ]
+}
