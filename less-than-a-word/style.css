@@ -3,33 +3,64 @@ html, body {
   padding: 0;
   background: #f5f5f5;
   height: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+/* =========================
+   App Layout
+========================= */
 #app {
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
 }
 
+/* =========================
+   Chat Canvas
+========================= */
 #chatCanvas {
   flex: 1;
   background: #ffffff;
+  display: block;
 }
 
+/* =========================
+   Choice Area
+========================= */
 #choices {
-  padding: 12px;
-  border-top: 1px solid #ddd;
-  background: #fafafa;
+  padding: 12px 14px 16px;
+  background: #ffffff;
+  border-top: 1px solid #e0e0e0;
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.06);
 }
 
+/* =========================
+   Choice Buttons
+========================= */
 .choice-btn {
   display: block;
   width: 100%;
-  margin-bottom: 8px;
-  padding: 10px;
-  border-radius: 12px;
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border-radius: 18px;
   border: none;
-  background: #e6e6e6;
-  font-size: 14px;
+  background: #f1f1f1;
+  font-size: 15px;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.choice-btn:last-child {
+  margin-bottom: 0;
+}
+
+.choice-btn:hover {
+  background: #e8e8e8;
+}
+
+.choice-btn:active {
+  transform: scale(0.98);
 }
