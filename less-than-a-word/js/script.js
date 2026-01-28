@@ -1,73 +1,55 @@
-// script.js
-import { loadProfile, loadProgressData } from './dataLoader.js';
-import { addMessage, showChoices, clearChoices, showEndMessage } from './ui.js';
-import { saveState, loadState, getAffectionLevel } from './utils.js';
+let currentCharId = '01'; // MVP: 固定キャラ
+let currentProgress, currentAffection, profile, progressData;
 
-let currentCharId = '01'; // MVP: キャラ01固定
-let currentProgressData;
-let currentSceneIndex = 0;
-let currentAffection = 0;
-let currentProgress = 1;
-let profile;
-
-async function init() {
-  const state = loadState(currentCharId);
+async function initGame() {
+  profile = await loadProfile(currentCharId);
+  const state = loadCharState(currentCharId, profile.initialProgress);
   currentProgress = state.progress;
   currentAffection = state.affection;
-
-  profile = await loadProfile(currentCharId);
-  currentProgressData = await loadProgressData(currentCharId, currentProgress);
-
-  // 好感度レベルチェック（MVPでは簡易分岐なし。将来的に使用）
-  const affectionLevel = getAffectionLevel(currentAffection, profile.affectionThresholds);
-
-  playNextScene();
+  await loadAndPlayProgress();
 }
 
-function playNextScene() {
-  if (currentSceneIndex >= currentProgressData.scenes.length) {
+async function loadAndPlayProgress() {
+  try {
+    progressData = await loadProgressData(currentCharId, currentProgress);
+    if (getAffectionLevel(currentAffection, profile.affectionThresholds) < progressData.affectionLevelRequired) {
+      alert('好感度が不足しています。');
+      return;
+    }
+    playScenes(progressData.scenes);
+  } catch (e) {
+    alert('ゲーム終了');
+  }
+}
+
+function playScenes(scenes, index = 0) {
+  if (index >= scenes.length) {
     completeProgress();
     return;
   }
 
-  const scene = currentProgressData.scenes[currentSceneIndex];
-
+  const scene = scenes[index];
   if (scene.type === 'text') {
-    addMessage('char', scene.text, profile.icon);
-    if (scene.next) {
-      currentSceneIndex = currentProgressData.scenes.findIndex(s => s.id === scene.next);
-    } else {
-      currentSceneIndex++;
-    }
-    setTimeout(playNextScene, 1000); // 簡易遅延で自然に表示
+    drawMessage(profile.icon, scene.text, true);
+    const nextIndex = scenes.findIndex(s => s.id === scene.next);
+    playScenes(scenes, nextIndex !== -1 ? nextIndex : index + 1);
   } else if (scene.type === 'choice') {
-    addMessage('player', scene.text);
-    showChoices(scene.choices, handleChoice);
+    drawMessage('', scene.text, false); // プレイヤーの思考
+    showChoices(scene.choices, choice => {
+      currentAffection += choice.affection;
+      drawMessage(profile.icon, choice.response, true);
+      saveCharState(currentCharId, currentProgress, currentAffection);
+      const nextIndex = scenes.findIndex(s => s.id === choice.next);
+      playScenes(scenes, nextIndex !== -1 ? nextIndex : index + 1);
+    });
   }
-}
-
-function handleChoice(choiceIndex) {
-  const choice = currentProgressData.scenes[currentSceneIndex].choices[choiceIndex];
-  addMessage('player', choice.label);
-  currentAffection += choice.affection;
-  addMessage('char', choice.response, profile.icon);
-  clearChoices();
-
-  saveState(currentCharId, currentProgress, currentAffection);
-
-  if (choice.next) {
-    currentSceneIndex = currentProgressData.scenes.findIndex(s => s.id === choice.next);
-  } else {
-    currentSceneIndex++;
-  }
-  setTimeout(playNextScene, 1000);
 }
 
 function completeProgress() {
-  showEndMessage(currentProgressData.end.message);
+  showEndMessage(progressData.end.message);
   currentProgress++;
-  saveState(currentCharId, currentProgress, currentAffection);
-  // 次回起動で次のProgressへ（リロードで自動）
+  saveCharState(currentCharId, currentProgress, currentAffection);
+  // 次回起動で自動次Progress
 }
 
-init();
+initGame();
