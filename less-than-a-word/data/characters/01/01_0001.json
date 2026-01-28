@@ -1,0 +1,48 @@
+{
+  "characterId": "01",
+  "progress": 1,
+  "affectionLevelRequired": 0,
+  "scenes": [
+    {
+      "id": "P001-S001",
+      "type": "text",
+      "text": "ねえ…あの、今日ちょっとだけお話ししてもいい…？",
+      "next": "P001-S002"
+    },
+    {
+      "id": "P001-S002",
+      "type": "choice",
+      "text": "(どう返そう…)",
+      "choices": [
+        {
+          "label": "もちろん！いつでも話しかけてね",
+          "affection": 5,
+          "response": "…ほんと？ やったぁ…嬉しい…♡",
+          "next": "P001-S003"
+        },
+        {
+          "label": "え、急にどうしたの？",
+          "affection": 1,
+          "response": "うぅ…急に変なこと言ってごめんね…",
+          "next": "P001-S003"
+        },
+        {
+          "label": "今ちょっと忙しいんだよね",
+          "affection": -3,
+          "response": "……そっか。ごめん、邪魔しちゃったね…",
+          "next": "P001-S003"
+        }
+      ]
+    },
+    {
+      "id": "P001-S003",
+      "type": "text",
+      "text": "…あのね、今日学校で先生に褒められたんだ。ちょっとだけ嬉しかったの。",
+      "next": null
+    }
+  ],
+  "end": {
+    "type": "progress_complete",
+    "message": "（会話が一区切りしたみたい。また明日話しかけてくれるかな…）"
+  }
+}
