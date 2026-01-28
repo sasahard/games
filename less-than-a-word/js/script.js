@@ -1,55 +1,38 @@
-let currentCharId = '01'; // MVP: 固定キャラ
-let currentProgress, currentAffection, profile, progressData;
+(async function main() {
+  const characterId = "01";
 
-async function initGame() {
-  profile = await loadProfile(currentCharId);
-  const state = loadCharState(currentCharId, profile.initialProgress);
-  currentProgress = state.progress;
-  currentAffection = state.affection;
-  await loadAndPlayProgress();
-}
+  const { profile, state } = await DataLoader.loadCharacter(characterId);
+  const progressData = await DataLoader.loadProgress(characterId, state.progress);
 
-async function loadAndPlayProgress() {
-  try {
-    progressData = await loadProgressData(currentCharId, currentProgress);
-    if (getAffectionLevel(currentAffection, profile.affectionThresholds) < progressData.affectionLevelRequired) {
-      alert('好感度が不足しています。');
-      return;
+  UI.clear();
+
+  let currentSceneId = progressData.scenes[0].id;
+  const sceneMap = Object.fromEntries(
+    progressData.scenes.map(s => [s.id, s])
+  );
+
+  async function playScene(id) {
+    const scene = sceneMap[id];
+    if (!scene) return;
+
+    if (scene.type === "text") {
+      UI.drawText(scene.text);
+      if (scene.next) playScene(scene.next);
     }
-    playScenes(progressData.scenes);
-  } catch (e) {
-    alert('ゲーム終了');
+
+    if (scene.type === "choice") {
+      UI.showChoices(scene.choices, choice => {
+        state.affection += choice.affection;
+        UI.clearChoices();
+        UI.drawText(choice.response);
+        if (choice.next) playScene(choice.next);
+      });
+    }
   }
-}
 
-function playScenes(scenes, index = 0) {
-  if (index >= scenes.length) {
-    completeProgress();
-    return;
-  }
+  playScene(currentSceneId);
 
-  const scene = scenes[index];
-  if (scene.type === 'text') {
-    drawMessage(profile.icon, scene.text, true);
-    const nextIndex = scenes.findIndex(s => s.id === scene.next);
-    playScenes(scenes, nextIndex !== -1 ? nextIndex : index + 1);
-  } else if (scene.type === 'choice') {
-    drawMessage('', scene.text, false); // プレイヤーの思考
-    showChoices(scene.choices, choice => {
-      currentAffection += choice.affection;
-      drawMessage(profile.icon, choice.response, true);
-      saveCharState(currentCharId, currentProgress, currentAffection);
-      const nextIndex = scenes.findIndex(s => s.id === choice.next);
-      playScenes(scenes, nextIndex !== -1 ? nextIndex : index + 1);
-    });
-  }
-}
-
-function completeProgress() {
-  showEndMessage(progressData.end.message);
-  currentProgress++;
-  saveCharState(currentCharId, currentProgress, currentAffection);
-  // 次回起動で自動次Progress
-}
-
-initGame();
+  window.addEventListener("beforeunload", () => {
+    DataLoader.saveState(characterId, state);
+  });
+})();
