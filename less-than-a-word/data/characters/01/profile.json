@@ -1,0 +1,13 @@
+{
+  "id": "01",
+  "name": "葵",
+  "icon": "assets/icons/char01.png",
+  "affectionThresholds": [0, 30, 70, 120, 200],
+  "initialProgress": 1,
+  "profile": {
+    "age": 17,
+    "description": "少し人見知りだけど、仲良くなると甘えん坊になる後輩。",
+    "hobby": "イラスト描きと深夜アニメ鑑賞",
+    "favoriteSeason": "秋"
+  }
+}
