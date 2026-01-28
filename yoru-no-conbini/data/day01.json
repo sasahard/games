@@ -1,49 +1,122 @@
 {
-  "metadata": {
-    "id": "day01",
-    "title": "帰らない夜"
-  },
-  "scenes": [
-    {
-      "id": "start",
-      "bg": "assets/bg/store_night.png",
-      "character": null,
-      "text": "深夜0時過ぎ。\n蛍光灯の音と、遠くの車の走る音だけが店内に残っている。",
-      "next": "scene01"
+    "metadata": {
+        "id": "day01",
+        "title": "帰らない夜"
     },
-    {
-      "id": "scene01",
-      "bg": "assets/bg/store_night.png",
-      "character": "assets/characters/businessman.png",
-      "text": "イートインに、見慣れたサラリーマンが座っている。\nカップ麺はもう空だ。",
-      "choices": [
-        { "label": "声をかける", "next": "scene02_a" },
-        { "label": "何も言わない", "next": "scene02_b" }
-      ]
-    },
-    {
-      "id": "scene02_a",
-      "bg": "assets/bg/store_night.png",
-      "character": "assets/characters/businessman.png",
-      "text": "「あの……何時まで大丈夫ですか」\n彼は少しだけ、安心したように笑った。",
-      "next": "ending_a"
-    },
-    {
-      "id": "scene02_b",
-      "bg": "assets/bg/store_night.png",
-      "character": "assets/characters/businessman.png",
-      "text": "あなたはレジを拭きながら、何も言わなかった。\n彼も、何も言わなかった。",
-      "next": "ending_b"
-    }
-  ],
-  "endings": [
-    {
-      "id": "ending_a",
-      "text": "彼は缶コーヒーを買い、軽く会釈して店を出た。\n夜は、少しだけやわらいだ気がした。"
-    },
-    {
-      "id": "ending_b",
-      "text": "気づくと、席は空いていた。\n夜は、何事もなかったように続いていく。"
-    }
-  ]
+    "scenes": [
+        {
+            "id": "start",
+            "bg": "assets/bg/store_night.png",
+            "character": null,
+            "text": "深夜0時過ぎ。蛍光灯の白い光が、店内の棚に長く淡い影を落としている。外の道路からは、時折車のヘッドライトが通り過ぎる音だけが響き、静寂をわずかに乱す。あなたはレジの後ろで、埃っぽいカウンターを拭きながら、夜の重みを肌に感じる。この時間、客はほとんど来ない。来るのは、帰る場所を失った者たちだけだ。店内の時計が、微かな音を立てて進む。",
+            "next": "scene01"
+        },
+        {
+            "id": "scene01",
+            "bg": "assets/bg/store_night.png",
+            "character": "assets/characters/businessman.png",
+            "text": "イートインの隅に、見慣れたサラリーマンが座っている。くたびれたスーツの襟がよれ、ネクタイは緩く解かれている。テーブルの上には、空になったカップ麺の容器と、しわくちゃの新聞。フォークが転がり、湯気の記憶だけが残る。彼の目は窓の外の闇を見つめ、動かない。この男は、毎晩のようにここに現れる。家に帰るのを、ただ先延ばしにしているだけなのか。あなたは、彼の沈黙が店内に染みつくのを感じる。",
+            "choices": [
+                {
+                    "label": "静かに声をかける",
+                    "next": "scene02_a"
+                },
+                {
+                    "label": "黙って見守る",
+                    "next": "scene02_b"
+                },
+                {
+                    "label": "お茶をそっと置く",
+                    "next": "scene02_c"
+                }
+            ]
+        },
+        {
+            "id": "scene02_a",
+            "bg": "assets/bg/store_night.png",
+            "character": "assets/characters/businessman.png",
+            "text": "あなたはカウンターから離れ、控えめに声をかけた。「あの……、何かお手伝いできることありますか？」\\n彼はゆっくり顔を上げ、疲れた目であなたを見る。口元がわずかに動く。「……いや、いいんだ。ただ、座っていたいだけさ」\\n空気が、少しだけ動き始めた。",
+            "choices": [
+                {
+                    "label": "理由を聞く",
+                    "next": "scene03_a"
+                },
+                {
+                    "label": "ゆっくりどうぞと言う",
+                    "next": "ending_a"
+                }
+            ]
+        },
+        {
+            "id": "scene02_b",
+            "bg": "assets/bg/store_night.png",
+            "character": "assets/characters/businessman.png",
+            "text": "あなたはレジを拭き続け、何も言わなかった。蛍光灯がちらつき、彼の影を長く伸ばす。彼も沈黙を守り、窓の外を見つめる。時間が、粘つくように過ぎる。あなたは思う。この静けさが、彼の望みなのか。",
+            "choices": [
+                {
+                    "label": "今さら声をかける",
+                    "next": "scene03_b"
+                },
+                {
+                    "label": "そのままにする",
+                    "next": "ending_b"
+                }
+            ]
+        },
+        {
+            "id": "scene02_c",
+            "bg": "assets/bg/store_night.png",
+            "character": "assets/characters/businessman.png",
+            "text": "あなたは無言で、温かい緑茶のペットボトルをカウンターに置き、彼のテーブルへそっと運ぶ。彼は驚いたように顔を上げ、ボトルを見つめる。「……ありがとう」小さな声が、夜の空気に溶ける。彼の指がボトルに触れ、わずかに震えていた。",
+            "choices": [
+                {
+                    "label": "微笑んで頷く",
+                    "next": "ending_c"
+                },
+                {
+                    "label": "そのまま立ち去る",
+                    "next": "scene03_c"
+                }
+            ]
+        },
+        {
+            "id": "scene03_a",
+            "bg": "assets/bg/store_night.png",
+            "character": "assets/characters/businessman.png",
+            "text": "「どうしてこんな時間に？」あなたは穏やかに尋ねる。彼はため息をつき、目を伏せる。「家に帰っても、誰もいないんだ。仕事も……もうダメだ」言葉がぽつぽつと零れ落ちる。店内の空気が、重く湿る。彼の孤独が、初めて形を成した。",
+            "next": "ending_d"
+        },
+        {
+            "id": "scene03_b",
+            "bg": "assets/bg/store_night.png",
+            "character": "assets/characters/businessman.png",
+            "text": "あなたは意を決して声をかける。「あの……大丈夫ですか？」彼はびっくりした顔で振り向き、苦笑する。「遅かったな。いや、もう少しだけここにいるよ」沈黙が、少しだけ崩れた。",
+            "next": "ending_a"
+        },
+        {
+            "id": "scene03_c",
+            "bg": "assets/bg/store_night.png",
+            "character": "assets/characters/businessman.png",
+            "text": "あなたは無言でレジに戻る。彼は茶を飲み、じっとテーブルを見つめる。時間が過ぎ、店内の時計が1時を指す。沈黙が、再び深まる。",
+            "next": "ending_b"
+        }
+    ],
+    "endings": [
+        {
+            "id": "ending_a",
+            "text": "彼は缶コーヒーを買い、軽く会釈して店を出た。夜は、少しだけやわらいだ気がした。あなたはカウンターを拭きながら、残された温もりを思う。"
+        },
+        {
+            "id": "ending_b",
+            "text": "気づくと、席は空いていた。カップ麺の容器だけが残る。夜は、何事もなかったように続く。このループが、永遠に。"
+        },
+        {
+            "id": "ending_c",
+            "text": "彼は茶を飲み干し、微笑んで立ち上がる。「ありがとう。また来るよ」ドアのベルが鳴り、闇に消える。無言の優しさが、夜を変えた。"
+        },
+        {
+            "id": "ending_d",
+            "text": "彼は全てを吐き出し、涙を拭う。「少し、楽になった」朝まで話し込み、店を出た。帰らない夜が、初めて終わった。"
+        }
+    ]
 }
